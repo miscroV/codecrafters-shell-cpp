@@ -21,6 +21,7 @@ int main() {
     } else if ( lstrip(command).substr(0, 4)=="echo") {
       std::string to_echo = lstrip(command).substr(5); // Get the rest of the command after "echo"
       std::cout << to_echo << std::endl; // Print the echoed string
+    } else if (lstrip(command).empty()) {
     } else {
       std::cout << command << ": command not found" << std::endl;
     }
