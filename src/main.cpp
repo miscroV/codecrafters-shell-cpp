@@ -7,5 +7,5 @@ int main() {
   std::cerr << std::unitbuf;
 
   // TODO: Uncomment the code below to pass the first stage
-  // std::cout << "$ ";
+  std::cout << "$ ";
 }
