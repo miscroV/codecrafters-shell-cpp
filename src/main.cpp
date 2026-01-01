@@ -3,30 +3,40 @@
 
 std::string strip(std::string str);
 std::string lstrip(std::string str);
+int handle_command(std::string command);
 
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-  while (true) {
+
+  int run = 0;
+  while (run==0) {
     std::cout << "$ "; // Show Prompt 
 
     std::string command; // Variable delaration
     std::getline(std::cin, command); //getting input from user
 
-
-    // Shell Command handling
-    if ( strip(command)=="exit" ) {
-      break; // Exit the shell
-    } else if ( lstrip(command).substr(0, 4)=="echo") {
-      std::string to_echo = lstrip(command).substr(5); // Get the rest of the command after "echo"
-      std::cout << to_echo << std::endl; // Print the echoed string
-    } else if (lstrip(command).empty()) {
-    } else {
-      std::cout << command << ": command not found" << std::endl;
-    }
+    run = handle_command(command);
   }
 }
+
+int handle_command(std::string command) {
+    if ( strip(command)=="exit" ) {
+      return 1; // Exit the shell
+    } 
+    else if ( lstrip(command).substr(0, 4)=="echo") {
+      std::string to_echo = lstrip(command).substr(5); // Get the rest of the command after "echo"
+      std::cout << to_echo << std::endl; // Print the echoed string
+    } 
+    else if (lstrip(command).empty()) {
+    } 
+    else {
+      std::cout << command << ": command not found" << std::endl;
+    }
+    return 0;
+}
+
 
 // AS A RULE FOR USING THE VSCODE AUTOCOMPLETE, I will Always note it, and
 // I will research the actual content of the function generated.
