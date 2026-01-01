@@ -2,6 +2,7 @@
 #include <string>
 
 std::string strip(std::string str);
+std::string lstrip(std::string str);
 
 int main() {
   // Flush after every std::cout / std:cerr
@@ -13,11 +14,16 @@ int main() {
     std::string command; // Variable delaration
     std::getline(std::cin, command); //getting input from user
 
-    if (strip(command)=="exit") {
-      break; // Exit the shell
-    }
 
-    std::cout << command << ": command not found" << std::endl;
+    // Shell Command handling
+    if ( strip(command)=="exit" ) {
+      break; // Exit the shell
+    } else if ( lstrip(command).substr(0, 4)=="echo") {
+      std::string to_echo = lstrip(command).substr(5); // Get the rest of the command after "echo"
+      std::cout << to_echo << std::endl; // Print the echoed string
+    } else {
+      std::cout << command << ": command not found" << std::endl;
+    }
   }
 }
 
@@ -35,5 +41,15 @@ std::string strip(std::string str) {
   const char* whitespace = " \t\n\r\f\v";
   str.erase(0, str.find_first_not_of(whitespace));
   str.erase(str.find_last_not_of(whitespace) + 1);
+  return str;
+}
+
+
+/*
+ * Like strip, but only removes leading whitespace.
+ */
+std::string lstrip(std::string str) { 
+  const char* whitespace = " \t\n\r\f\v";
+  str.erase(0, str.find_first_not_of(whitespace));
   return str;
 }
