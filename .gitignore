@@ -1045,3 +1045,4 @@ dkms.conf
 *.dis
 
 vcpkg_installed
+vcpkg/
