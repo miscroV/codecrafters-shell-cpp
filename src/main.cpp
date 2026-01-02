@@ -105,7 +105,7 @@ int handle_native_commands(std::string command,
           if (is_executable) {
             // std::cout << full_path << ' ';
             // std::cout << is_executable << std::endl;
-            std::cout << arg << " is " << full_path << std::endl;
+            std::cout << arg << " is " << full_path.generic_string() << std::endl;
             found = true;
           }
         }
