@@ -86,6 +86,7 @@ int handle_native_commands(std::string command,
         std::istringstream path_stream(PATH);
         std::string dir;
         // Iterate through PATH directories and locate the command
+        bool found = false;
         while (std::getline(path_stream, dir, ':')) {
           fs::path full_path = fs::path(dir) / arg;
           // Check if the file exists, is a regular file, and is executable
@@ -105,19 +106,22 @@ int handle_native_commands(std::string command,
             // std::cout << full_path << ' ';
             // std::cout << is_executable << std::endl;
             std::cout << arg << " is " << full_path << std::endl;
+            found = true;
           }
-          // else {
-
-          //   std::cout << arg << ": not found" << std::endl;
-          // }
+        }
+        if (!found) {
+        std::cout << arg << ": not found" << std::endl;
+        } 
       }
-    } 
-    return 1;
-   }
+      return 1;
+    }
   }
   std::cout << command << ": native command not handled" << std::endl;
   return 1;
 }
+
+
+
 
 int handle_commands(std::string command, std::vector<std::string> args) {
     if (true) {
