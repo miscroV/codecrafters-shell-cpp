@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <filesystem>
 
+namespace fs = std::filesystem;
+
 std::string strip(std::string str);
 std::string lstrip(std::string str);
 int handle_native_commands(std::string command, 
@@ -85,27 +87,29 @@ int handle_native_commands(std::string command,
         std::string dir;
         // Iterate through PATH directories and locate the command
         while (std::getline(path_stream, dir, ':')) {
-          std::filesystem::path full_path = std::filesystem::path(dir) / arg;
+          fs::path full_path = fs::path(dir) / arg;
           // Check if the file exists, is a regular file, and is executable
-          bool is_executable = !(
-            std::filesystem::exists(full_path) && 
-            std::filesystem::is_regular_file(full_path) && (
-            (std::filesystem::status(full_path).permissions() & 
-            std::filesystem::perms::owner_exec) != std::filesystem::perms::none ||
-            (std::filesystem::status(full_path).permissions() & 
-            std::filesystem::perms::group_exec) != std::filesystem::perms::none ||
-            (std::filesystem::status(full_path).permissions() & 
-            std::filesystem::perms::others_exec) != std::filesystem::perms::none
-            ));
+          bool is_executable = (
+            fs::exists(full_path) && 
+            fs::is_regular_file(full_path) && (
+            (fs::status(full_path).permissions() & 
+            fs::perms::owner_exec) != fs::perms::none ||
+            (fs::status(full_path).permissions() & 
+            fs::perms::group_exec) != fs::perms::none ||
+            (fs::status(full_path).permissions() & 
+            fs::perms::others_exec) != fs::perms::none
+              )
+            );
 
           if (is_executable) {
+            // std::cout << full_path << ' ';
+            // std::cout << is_executable << std::endl;
             std::cout << arg << " is " << full_path << std::endl;
-            return 1;
           }
-          else {
-            std::cout << arg << ": not found" << std::endl;
-            return 1;
-          }
+          // else {
+
+          //   std::cout << arg << ": not found" << std::endl;
+          // }
       }
     } 
     return 1;
