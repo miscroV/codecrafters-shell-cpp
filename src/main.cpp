@@ -10,7 +10,6 @@ std::string lstrip(std::string str);
 int handle_native_commands(std::string command, std::vector<std::string> args);
 int handle_commands(std::string command, std::vector<std::string> args);
 
-
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -74,8 +73,6 @@ int handle_native_commands(std::string command, std::vector<std::string> args) {
   return 1;
 }
   
-
-
 int handle_commands(std::string command, std::vector<std::string> args) {
     if (true) {
       std::cout << command << ": command not found" << std::endl;
