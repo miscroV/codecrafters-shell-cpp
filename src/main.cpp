@@ -7,7 +7,10 @@
 
 std::string strip(std::string str);
 std::string lstrip(std::string str);
-int handle_native_commands(std::string command, std::vector<std::string> args);
+int handle_native_commands(std::string command, 
+    std::vector<std::string> args,
+    std::vector<std::string> native_commands
+  );
 int handle_commands(std::string command, std::vector<std::string> args);
 
 int main() {
