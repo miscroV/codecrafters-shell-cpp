@@ -7,8 +7,8 @@
 
 std::string strip(std::string str);
 std::string lstrip(std::string str);
-int handle_native_commands(std::string command);
-int handle_commands(std::string command);
+int handle_native_commands(std::string command, std::vector<std::string> args);
+int handle_commands(std::string command, std::vector<std::string> args);
 
 
 int main() {
@@ -32,49 +32,51 @@ int main() {
     // read command from stream
     line_stream >> command;
 
-    // pack arguments to string:
+    // pack arguments to vector :
     std::vector<std::string> args;
     args.reserve(16); // preallocate space for 16 arguments
     while (line_stream >> input) {
       args.push_back(input); // add argument to vector
     }
 
-     if (std::binary_search(native_commands.begin(), native_commands.end(), command)) {
-      // handle native commands
-     } 
-     else {
-      // handle other commands
-     }
+    // handle empty / native / other commands
+    if (command.empty()) {
+    }
+    else if (std::binary_search(native_commands.begin(), native_commands.end(), command)) {
+      err_code = handle_native_commands(command, args);
+    } 
+    else {
+      err_code = handle_commands(command, args);
+    }
 
-     
-    err_code = handle_native_commands(command);
-    if (err_code==0) {break;} else if (err_code==1) {continue;} // check status
-    err_code = handle_commands(command);
+    if (err_code == 0) {break;}
   }
 }
 
-
-int handle_native_commands(std::string command) {
-  if ( strip(command)=="exit" ) {
+int handle_native_commands(std::string command, std::vector<std::string> args) {
+  if (command == "exit") {
     return 0; // Exit the shell
-  } 
-  else if ( lstrip(command).substr(0, 4)=="echo") {
-    std::string to_echo = lstrip(command).substr(4); // Get the rest of the command after "echo"
-    std::cout << to_echo << std::endl; // Print the echoed string
+  }
+  else if (command == "echo") {
+    for (const auto& arg : args) {
+      std::cout << arg << " ";
+    }
+    std::cout << std::endl;
     return 1;
-  } else if ( lstrip(command).substr(0, 4)=="type") {
-    std::string command = strip(lstrip(command).substr(4));
-
+  }
+  else if (command == "echo") {
+    for (const auto& arg : args) {
+      std::cout << arg << " ";
+    }
+    std::cout << std::endl;
     return 1;
-  } 
-  else if (lstrip(command).empty()) {
-    return 1;
-  } 
-  return 2; //continue running
+  }
+  return 1;
 }
+  
 
 
-int handle_commands(std::string command) {
+int handle_commands(std::string command, std::vector<std::string> args) {
     if (true) {
       std::cout << command << ": command not found" << std::endl;
       return 2;
