@@ -29,8 +29,24 @@ int main() {
     // convert line to stream, allows for easier use.
     std::istringstream line_stream(input);
 
+    // read command from stream
     line_stream >> command;
 
+    // pack arguments to string:
+    std::vector<std::string> args;
+    args.reserve(16); // preallocate space for 16 arguments
+    while (line_stream >> input) {
+      args.push_back(input); // add argument to vector
+    }
+
+     if (std::binary_search(native_commands.begin(), native_commands.end(), command)) {
+      // handle native commands
+     } 
+     else {
+      // handle other commands
+     }
+
+     
     err_code = handle_native_commands(command);
     if (err_code==0) {break;} else if (err_code==1) {continue;} // check status
     err_code = handle_commands(command);
