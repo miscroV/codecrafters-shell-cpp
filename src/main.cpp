@@ -82,8 +82,8 @@ int handle_native_commands(std::string command,
         std::cout << arg << " is a shell builtin" << std::endl;
         return 1;
       } 
-      if (fs::path p = get_executable_path(arg); !p.empty()) {
-        std::cout << arg << " is " << p.generic_string() << std::endl;
+      if (fs::path argpath = get_executable_path(arg); !argpath.empty()) {
+        std::cout << arg << " is " << argpath.generic_string() << std::endl;
         return 1;
       }
       else {
