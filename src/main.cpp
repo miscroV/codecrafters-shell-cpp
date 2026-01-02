@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <filesystem>
 
 std::string strip(std::string str);
 std::string lstrip(std::string str);
@@ -71,18 +72,47 @@ int handle_native_commands(std::string command,
     if (args.empty()) {
       return 2;
     }
+
     for (const auto& arg : args) {
       if (std::binary_search(native_commands.begin(), 
       native_commands.end(), arg) ) {
         std::cout << arg << " is a shell builtin" << std::endl;
-      } else {
-        std::cout << arg << ": not found" << std::endl;
+      } 
+      else {
+        // Iterate through PATH directories and locate the command
+        std::string PATH = std::getenv("PATH");
+        std::istringstream path_stream(PATH);
+        std::string dir;
+        bool found = false;
+        while (std::getline(path_stream, dir, ':')) {
+          std::filesystem::path full_path = std::filesystem::path(dir) / arg;
+          // Check if the file exists, is a regular file, and is executable
+          bool is_executable = (
+            std::filesystem::exists(full_path) && 
+            std::filesystem::is_regular_file(full_path) && (
+            (std::filesystem::status(full_path).permissions() & 
+            std::filesystem::perms::owner_exec) != std::filesystem::perms::none ||
+            (std::filesystem::status(full_path).permissions() & 
+            std::filesystem::perms::group_exec) != std::filesystem::perms::none ||
+            (std::filesystem::status(full_path).permissions() & 
+            std::filesystem::perms::others_exec) != std::filesystem::perms::none
+            ));
+
+          if (is_executable) {
+            std::cout << arg << " is " << full_path << std::endl;
+            return 1;
+          }
+          else {
+            std::cout << arg << ": not found" << std::endl;
+            return 1;
+          }
       }
     } 
     return 1;
   }
   std::cout << command << ": native command not handled" << std::endl;
   return 1;
+}
 }
 
 int handle_commands(std::string command, std::vector<std::string> args) {
