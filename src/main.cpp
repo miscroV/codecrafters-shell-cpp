@@ -3,38 +3,47 @@
 
 std::string strip(std::string str);
 std::string lstrip(std::string str);
-int handle_command(std::string command);
+int handle_native_commands(std::string command);
+int handle_commands(std::string command);
 
 int main() {
-  // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  int run = 0;
-  while (run!=1) {
-    std::cout << "$ "; // Show Prompt 
+  int status = 1;
+  while (true) {
+    
+    std::cout << "$ ";
 
-    std::string command; // Variable delaration
-    std::getline(std::cin, command); //getting input from user
+    std::string command;
+    std::getline(std::cin, command);
 
-    run = handle_command(command);
+    status = handle_native_commands(command);
+    if (status==0) {break;} else if (status==1) {continue;} // check status
+    status = handle_commands(command);
   }
 }
 
-int handle_command(std::string command) {
-    if ( strip(command)=="exit" ) {
-      return 1; // Exit the shell
-    } 
-    else if ( lstrip(command).substr(0, 4)=="echo") {
-      std::string to_echo = lstrip(command).substr(5); // Get the rest of the command after "echo"
-      std::cout << to_echo << std::endl; // Print the echoed string
-    } 
-    else if (lstrip(command).empty()) {
-    } 
-    else {
+int handle_native_commands(std::string command) {
+  if ( strip(command)=="exit" ) {
+    return 0; // Exit the shell
+  } 
+  else if ( lstrip(command).substr(0, 4)=="echo") {
+    std::string to_echo = lstrip(command).substr(4); // Get the rest of the command after "echo"
+    std::cout << to_echo << std::endl; // Print the echoed string
+    return 1;
+  } 
+  else if (lstrip(command).empty()) {
+    return 1;
+  } 
+  return 2; //continue running
+}
+
+int handle_commands(std::string command) {
+    if (true) {
       std::cout << command << ": command not found" << std::endl;
+      return 2;
     }
-    return 0;
 }
 
 // AS A RULE FOR USING THE VSCODE AUTOCOMPLETE, I will Always note it, and
