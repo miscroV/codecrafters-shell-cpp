@@ -79,15 +79,15 @@ int handle_native_commands(std::string command,
         std::cout << arg << " is a shell builtin" << std::endl;
       } 
       else {
-        // Iterate through PATH directories and locate the command
+        // Get Path Variable as dir strings. 
         std::string PATH = std::getenv("PATH");
         std::istringstream path_stream(PATH);
         std::string dir;
-        bool found = false;
+        // Iterate through PATH directories and locate the command
         while (std::getline(path_stream, dir, ':')) {
           std::filesystem::path full_path = std::filesystem::path(dir) / arg;
           // Check if the file exists, is a regular file, and is executable
-          bool is_executable = (
+          bool is_executable = !(
             std::filesystem::exists(full_path) && 
             std::filesystem::is_regular_file(full_path) && (
             (std::filesystem::status(full_path).permissions() & 
@@ -109,10 +109,10 @@ int handle_native_commands(std::string command,
       }
     } 
     return 1;
+   }
   }
   std::cout << command << ": native command not handled" << std::endl;
   return 1;
-}
 }
 
 int handle_commands(std::string command, std::vector<std::string> args) {
