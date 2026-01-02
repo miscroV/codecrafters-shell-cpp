@@ -15,6 +15,7 @@ int handle_native_commands(std::string command,
     std::vector<std::string> native_commands
   );
 int handle_commands(std::string command, std::vector<std::string> args);
+fs::path get_executable_path(const std::string& command);
 
 int main() {
   std::cout << std::unitbuf;
@@ -79,50 +80,46 @@ int handle_native_commands(std::string command,
       if (std::binary_search(native_commands.begin(), 
       native_commands.end(), arg) ) {
         std::cout << arg << " is a shell builtin" << std::endl;
+        return 1;
       } 
-      else {
-        // Get Path Variable as dir strings. 
-        std::string PATH = std::getenv("PATH");
-        std::istringstream path_stream(PATH);
-        std::string dir;
-        // Iterate through PATH directories and locate the command
-        bool found = false;
-        while (std::getline(path_stream, dir, ':')) {
-          fs::path full_path = fs::path(dir) / arg;
-          // Check if the file exists, is a regular file, and is executable
-          bool is_executable = (
-            fs::exists(full_path) && 
-            fs::is_regular_file(full_path) && (
-            (fs::status(full_path).permissions() & 
-            fs::perms::owner_exec) != fs::perms::none ||
-            (fs::status(full_path).permissions() & 
-            fs::perms::group_exec) != fs::perms::none ||
-            (fs::status(full_path).permissions() & 
-            fs::perms::others_exec) != fs::perms::none
-              )
-            );
-
-          if (is_executable) {
-            // std::cout << full_path << ' ';
-            // std::cout << is_executable << std::endl;
-            std::cout << arg << " is " << full_path.generic_string() << std::endl;
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-        std::cout << arg << ": not found" << std::endl;
-        } 
+      if (fs::path p = get_executable_path(arg); !p.empty()) {
+        std::cout << arg << " is " << p.generic_string() << std::endl;
+        return 1;
       }
-      return 1;
+      else {
+        std::cout << arg << ": not found" << std::endl;
+      }
     }
   }
   std::cout << command << ": native command not handled" << std::endl;
   return 1;
 }
 
+fs::path get_executable_path(const std::string& command) {
+  std::string PATH = std::getenv("PATH");
+  std::istringstream path_stream(PATH);
+  std::string dir;
 
-
+  while (std::getline(path_stream, dir, ':')) {
+    fs::path full_path = fs::path(dir) / command;
+    bool is_executable = (
+    fs::exists(full_path) && 
+    fs::is_regular_file(full_path) && (
+    (fs::status(full_path).permissions() & fs::perms::owner_exec) 
+      != fs::perms::none ||
+    (fs::status(full_path).permissions() & fs::perms::group_exec) 
+      != fs::perms::none ||
+    (fs::status(full_path).permissions() & fs::perms::others_exec) 
+      != fs::perms::none
+      )
+    );
+    if (is_executable) {
+        return full_path;
+        break;
+    }
+  }
+  return fs::path();
+}
 
 int handle_commands(std::string command, std::vector<std::string> args) {
     if (true) {
