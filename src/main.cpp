@@ -40,7 +40,7 @@ int main() {
     }
     else if (std::binary_search(native_commands.begin(), 
       native_commands.end(), command) ) {
-      err_code = handle_native_commands(command, args);
+      err_code = handle_native_commands(command, args, native_commands);
     } 
     else {
       err_code = handle_commands(command, args);
@@ -50,7 +50,10 @@ int main() {
   }
 }
 
-int handle_native_commands(std::string command, std::vector<std::string> args) {
+int handle_native_commands(std::string command, 
+    std::vector<std::string> args,
+    std::vector<std::string> native_commands
+  ) {
   if (command == "exit") {
     return 0; // Exit the shell
   }
@@ -65,16 +68,17 @@ int handle_native_commands(std::string command, std::vector<std::string> args) {
     if (args.empty()) {
       return 2;
     }
-    
     for (const auto& arg : args) {
-      if (arg == "exit" || arg == "echo" || arg == "type") {
+      if (std::binary_search(native_commands.begin(), 
+      native_commands.end(), arg) ) {
         std::cout << arg << " is a shell builtin" << std::endl;
       } else {
         std::cout << arg << ": not found" << std::endl;
       }
-    }
+    } 
     return 1;
   }
+  std::cout << command << ": native command not handled" << std::endl;
   return 1;
 }
 
