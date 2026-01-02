@@ -88,11 +88,19 @@ int handle_native_commands(std::string command,
       }
       else {
         std::cout << arg << ": not found" << std::endl;
+        return 1;
       }
     }
   }
   std::cout << command << ": native command not handled" << std::endl;
   return 1;
+}
+
+int handle_commands(std::string command, std::vector<std::string> args) {
+    if (true) {
+      std::cout << command << ": command not found" << std::endl;
+      return 2;
+    }
 }
 
 fs::path get_executable_path(const std::string& command) {
@@ -121,9 +129,4 @@ fs::path get_executable_path(const std::string& command) {
   return fs::path();
 }
 
-int handle_commands(std::string command, std::vector<std::string> args) {
-    if (true) {
-      std::cout << command << ": command not found" << std::endl;
-      return 2;
-    }
-}
+
