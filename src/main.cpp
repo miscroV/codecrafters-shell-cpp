@@ -25,23 +25,21 @@ int main() {
     std::cout << "$ ";
     std::string input;
     std::getline(std::cin, input);
-    // convert line to stream, allows for easier use.
-    std::istringstream line_stream(input);
+    
+    std::istringstream line_stream(input); // create stream from input line
+    line_stream >> command;                // read command from stream
 
-    // read command from stream
-    line_stream >> command;
-
-    // pack arguments to vector :
-    std::vector<std::string> args;
-    args.reserve(16); // preallocate space for 16 arguments
-    while (line_stream >> input) {
-      args.push_back(input); // add argument to vector
+    std::vector<std::string> args;     // vector to hold arguments
+    args.reserve(16);                  // preallocate space for 16 arguments
+    while (line_stream >> input) {     // pack arguments to vector :
+      args.push_back(input); 
     }
 
     // handle empty / native / other commands
     if (command.empty()) {
     }
-    else if (std::binary_search(native_commands.begin(), native_commands.end(), command)) {
+    else if (std::binary_search(native_commands.begin(), 
+      native_commands.end(), command) ) {
       err_code = handle_native_commands(command, args);
     } 
     else {
@@ -63,16 +61,23 @@ int handle_native_commands(std::string command, std::vector<std::string> args) {
     std::cout << std::endl;
     return 1;
   }
-  else if (command == "echo") {
-    for (const auto& arg : args) {
-      std::cout << arg << " ";
+  else if (command == "type") {
+    if (args.empty()) {
+      return 2;
     }
-    std::cout << std::endl;
+    
+    for (const auto& arg : args) {
+      if (arg == "exit" || arg == "echo" || arg == "type") {
+        std::cout << arg << " is a shell builtin" << std::endl;
+      } else {
+        std::cout << arg << ": not found" << std::endl;
+      }
+    }
     return 1;
   }
   return 1;
 }
-  
+
 int handle_commands(std::string command, std::vector<std::string> args) {
     if (true) {
       std::cout << command << ": command not found" << std::endl;
