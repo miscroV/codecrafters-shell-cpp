@@ -89,7 +89,7 @@ int handle_commands(std::string command,
   // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
     bp::child c(
-      execpath.generic_string(),
+      execpath.filename().generic_string(),
       bp::args(args),
       bp::std_out > stdout,
       bp::std_err > stderr
