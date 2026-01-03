@@ -61,14 +61,12 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   }
   // Execute type command
   else if (command == "type") {
-  
     if (args.empty()) {
       return 2;
     }
-
     for (const auto& arg : args) {
       if (std::binary_search(native_commands.begin(), 
-      native_commands.end(), arg) ) {
+        native_commands.end(), arg) ) {
         std::cout << arg << " is a shell builtin" << std::endl;
       } 
       else if (fs::path argpath = get_executable_path(arg); !argpath.empty()) {
@@ -86,7 +84,8 @@ int handle_commands(std::string command, std::vector<std::string> args) {
     bp::child c(
       bp::args(args),
       bp::std_out > stdout,
-      bp::std_err > stderr
+      bp::std_err > stderr,
+      bp::std_in  < stdin
       );
     c.wait();
     return c.exit_code();
