@@ -82,9 +82,9 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   }
   // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
+    args.insert(args.begin(), command); // insert command at args[0]
     bp::child c(
-      bp::search_path(command),
-      bp::args(args),
+      args,
       bp::std_out > stdout,
       bp::std_err > stderr
     );
