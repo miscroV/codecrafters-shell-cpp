@@ -5,9 +5,10 @@
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
-
+#include <boost/process.hpp>
 
 namespace fs = std::filesystem;
+namespace bp = boost::process;
 
 int handle_commands(std::string command, 
     std::vector<std::string> args,
@@ -85,26 +86,10 @@ int handle_commands(std::string command,
     return 1;
   }
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
-    // Execute external command
-    args.push_back(nullptr); // Null-terminate the argument list
-
-    pid_t pid = fork();
-    if (pid == 0) {
-      // Child process
-      execv(exec_path.c_str(), const_cast<char* const*>(c_args.data()));
-      std::cerr << "Failed to execute " << command << std::endl;
-      std::exit(1);
-    } 
-    else if (pid > 0) {
-      // Parent process
-      int status;
-      waitpid(pid, &status, 0);
-      return 1;
-    } 
-    else {
-      std::cerr << "Fork failed" << std::endl;
-      return 1;
-    }
+    int err_code = bp::system(
+      execpath.generic_string(), 
+      bp::args(args)
+    );
   }
   std::cout << command << ": command not found" << std::endl;
   return 1;
