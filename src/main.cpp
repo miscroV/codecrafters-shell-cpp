@@ -82,15 +82,16 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   }
   // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
-    bp::child c(
-      execpath.filename().generic_string(),
-      bp::args(args),
-      bp::std_out > stdout,
-      bp::std_err > stderr
-    );
+      bp::child c(
+          execpath.filename().generic_string(),
+          bp::args(args),
+          bp::std_out > stdout,
+          bp::std_err > stderr
+        );
+      c.wait();
+      return c.exit_code();
     // std::cout << execpath.filename().generic_string() << ": launched with PID " << c.id() << std::endl;
-    c.wait();
-    return c.exit_code();
+
   }
   // Command not found
   else {
