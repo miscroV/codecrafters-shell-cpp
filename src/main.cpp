@@ -19,8 +19,7 @@ int main() {
 
   int err_code = 1;
   while (true) {
-
-    std::string command;
+    std::string command; // empty the command string every loop. 
     std::cout << "$ ";
     std::string input;
     std::getline(std::cin, input);
@@ -33,24 +32,19 @@ int main() {
     while (line_stream >> input) {     // pack arguments to vector :
       args.push_back(input); 
     }
-
     // handle empty / native / other commands
     if (command.empty()) {} 
     else {
       err_code = handle_commands(command, args);
     }
-
     if (err_code == -5) {break;}
   }
 }
 
-int handle_commands(std::string command, 
-    std::vector<std::string> args
-  ) {
+int handle_commands(std::string command, std::vector<std::string> args) {
   std::vector<std::string> native_commands = {
-    "exit", 
-    "echo", 
-    "type"};
+    "exit", "echo", "type"
+  };
   std::sort(native_commands.begin(), native_commands.end());
 
   // Execute exit command
@@ -89,7 +83,7 @@ int handle_commands(std::string command,
   // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
     bp::child c(
-      execpath.filename().generic_string(),
+      execpath.generic_string(),
       bp::args(args),
       bp::std_out > stdout,
       bp::std_err > stderr
