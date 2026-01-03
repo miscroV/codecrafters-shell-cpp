@@ -6,15 +6,13 @@
 #include <algorithm>
 #include <filesystem>
 
+
 namespace fs = std::filesystem;
 
-std::string strip(std::string str);
-std::string lstrip(std::string str);
-int handle_native_commands(std::string command, 
+int handle_commands(std::string command, 
     std::vector<std::string> args,
     std::vector<std::string> native_commands
   );
-int handle_commands(std::string command, std::vector<std::string> args);
 fs::path get_executable_path(const std::string& command);
 
 int main() {
@@ -44,20 +42,16 @@ int main() {
 
     // handle empty / native / other commands
     if (command.empty()) {
-    }
-    else if (std::binary_search(native_commands.begin(), 
-      native_commands.end(), command) ) {
-      err_code = handle_native_commands(command, args, native_commands);
     } 
     else {
-      err_code = handle_commands(command, args);
+      err_code = handle_commands(command, args, native_commands);
     }
 
     if (err_code == 0) {break;}
   }
 }
 
-int handle_native_commands(std::string command, 
+int handle_commands(std::string command, 
     std::vector<std::string> args,
     std::vector<std::string> native_commands
   ) {
@@ -80,28 +74,42 @@ int handle_native_commands(std::string command,
       if (std::binary_search(native_commands.begin(), 
       native_commands.end(), arg) ) {
         std::cout << arg << " is a shell builtin" << std::endl;
-        return 1;
       } 
-      if (fs::path argpath = get_executable_path(arg); !argpath.empty()) {
+      else if (fs::path argpath = get_executable_path(arg); !argpath.empty()) {
         std::cout << arg << " is " << argpath.generic_string() << std::endl;
-        return 1;
       }
       else {
         std::cout << arg << ": not found" << std::endl;
-        return 1;
-      }
+      } 
+    }
+    return 1;
+  }
+  else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
+    // Execute external command
+    args.push_back(nullptr); // Null-terminate the argument list
+
+    pid_t pid = fork();
+    if (pid == 0) {
+      // Child process
+      execv(exec_path.c_str(), const_cast<char* const*>(c_args.data()));
+      std::cerr << "Failed to execute " << command << std::endl;
+      std::exit(1);
+    } 
+    else if (pid > 0) {
+      // Parent process
+      int status;
+      waitpid(pid, &status, 0);
+      return 1;
+    } 
+    else {
+      std::cerr << "Fork failed" << std::endl;
+      return 1;
     }
   }
-  std::cout << command << ": native command not handled" << std::endl;
+  std::cout << command << ": command not found" << std::endl;
   return 1;
 }
 
-int handle_commands(std::string command, std::vector<std::string> args) {
-    if (true) {
-      std::cout << command << ": command not found" << std::endl;
-      return 2;
-    }
-}
 
 fs::path get_executable_path(const std::string& command) {
   std::string PATH = std::getenv("PATH");
