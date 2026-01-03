@@ -83,12 +83,12 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
     bp::child c(
-      execpath.string(),
+      bp::search_path(command),
       bp::args(args),
       bp::std_out > stdout,
       bp::std_err > stderr
     );
-    //std::cout << execpath.filename().generic_string() << ": launched with PID " << c.id() << std::endl;
+    // std::cout << execpath.filename().generic_string() << ": launched with PID " << c.id() << std::endl;
     c.wait();
     return c.exit_code();
   }
