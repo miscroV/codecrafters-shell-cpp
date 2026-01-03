@@ -88,6 +88,7 @@ int handle_commands(std::string command, std::vector<std::string> args) {
       bp::std_out > stdout,
       bp::std_err > stderr
     );
+    std::cout << execpath.filename().generic_string() << ": launched with PID " << c.id() << std::endl;
     c.wait();
     return c.exit_code();
   }
