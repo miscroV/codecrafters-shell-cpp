@@ -18,10 +18,9 @@ int main() {
   std::cerr << std::unitbuf;
 
   int err_code = 1;
-  std::string command;
-
   while (true) {
-    
+
+    std::string command;
     std::cout << "$ ";
     std::string input;
     std::getline(std::cin, input);
@@ -36,13 +35,12 @@ int main() {
     }
 
     // handle empty / native / other commands
-    if (command.empty()) {
-    } 
+    if (command.empty()) {} 
     else {
       err_code = handle_commands(command, args);
     }
 
-    if (err_code == 0) {break;}
+    if (err_code == -5) {break;}
   }
 }
 
@@ -57,7 +55,7 @@ int handle_commands(std::string command,
 
   // Execute exit command
   if (command == "exit") {
-    return 0; 
+    return -5; 
   }
   // Execute echo command
   else if (command == "echo") {
@@ -65,7 +63,7 @@ int handle_commands(std::string command,
       std::cout << arg << " ";
     }
     std::cout << std::endl;
-    return 1;
+    return 0;
   }
   // Execute type command
   else if (command == "type") {
@@ -86,21 +84,24 @@ int handle_commands(std::string command,
         std::cout << arg << ": not found" << std::endl;
       } 
     }
-    return 1;
+    return 0;
   }
   // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
-    // TODO REFACTOR to bp::child!
-    int err_code = bp::system(
-      execpath.generic_string(), 
-      bp::args(args)
+    bp::child c(
+      execpath.generic_string(),
+      bp::args(args),
+      bp::std_out > stdout,
+      bp::std_err > stderr
     );
+    c.wait();
+    return c.exit_code();
   }
   // Command not found
   else {
   std::cout << command << ": command not found" << std::endl;
+  return 0;
   }
-  return 1;
 }
 
 fs::path get_executable_path(const std::string& command) {
