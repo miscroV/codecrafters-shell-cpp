@@ -10,18 +10,12 @@
 namespace fs = std::filesystem;
 namespace bp = boost::process;
 
-int handle_commands(std::string command, 
-    std::vector<std::string> args,
-    std::vector<std::string> native_commands
-  );
+int handle_commands(std::string command, std::vector<std::string> args);
 fs::path get_executable_path(const std::string& command);
 
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-
-  std::vector<std::string> native_commands = {"exit", "echo", "type"};
-  std::sort(native_commands.begin(), native_commands.end());
 
   int err_code = 1;
   std::string command;
@@ -45,7 +39,7 @@ int main() {
     if (command.empty()) {
     } 
     else {
-      err_code = handle_commands(command, args, native_commands);
+      err_code = handle_commands(command, args);
     }
 
     if (err_code == 0) {break;}
@@ -53,12 +47,19 @@ int main() {
 }
 
 int handle_commands(std::string command, 
-    std::vector<std::string> args,
-    std::vector<std::string> native_commands
+    std::vector<std::string> args
   ) {
+  std::vector<std::string> native_commands = {
+    "exit", 
+    "echo", 
+    "type"};
+  std::sort(native_commands.begin(), native_commands.end());
+
+  // Execute exit command
   if (command == "exit") {
-    return 0; // Exit the shell
+    return 0; 
   }
+  // Execute echo command
   else if (command == "echo") {
     for (const auto& arg : args) {
       std::cout << arg << " ";
@@ -66,7 +67,9 @@ int handle_commands(std::string command,
     std::cout << std::endl;
     return 1;
   }
+  // Execute type command
   else if (command == "type") {
+  
     if (args.empty()) {
       return 2;
     }
@@ -85,16 +88,20 @@ int handle_commands(std::string command,
     }
     return 1;
   }
+  // Execute external command
   else if (fs::path execpath = get_executable_path(command); !execpath.empty()) {
+    // TODO REFACTOR to bp::child!
     int err_code = bp::system(
       execpath.generic_string(), 
       bp::args(args)
     );
   }
+  // Command not found
+  else {
   std::cout << command << ": command not found" << std::endl;
+  }
   return 1;
 }
-
 
 fs::path get_executable_path(const std::string& command) {
   std::string PATH = std::getenv("PATH");
