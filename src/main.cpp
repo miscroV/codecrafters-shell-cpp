@@ -19,7 +19,7 @@ namespace bp = boost::process;
  * 
  * @param command String value of command to be ran.
  * @param args Vector array of arguments to send to the command
- * @return Int error code returned by the command. 
+ * @return Int error code returned by t he command. 
  * 
  * @note Native commands are {exit, echo, type}
  * 
@@ -133,7 +133,7 @@ int handle_commands(std::string command, std::vector<std::string> args) {
     std::cout << command << ": command not found" << std::endl;
   return 0;
   }
-}
+}   
 /*******************************************************************************
  * SHELL BUILTIN FUNCTIONS
 *******************************************************************************/
@@ -196,8 +196,8 @@ fs::path get_executable_path(const std::string& command) {
     );
     
     if (is_executable) {
-        return full_path;
-        break;
+      return full_path;
+      break;
     }
   }
   return fs::path();
