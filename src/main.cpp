@@ -7,6 +7,9 @@
 #include <filesystem>
 #include <boost/process.hpp>
 
+#include "shell-builtins.h"
+#include "shell-helpers.h"
+
 namespace fs = std::filesystem;
 namespace bp = boost::process;
 
