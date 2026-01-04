@@ -19,7 +19,7 @@ namespace bp = boost::process;
  * 
  * @param command String value of command to be ran.
  * @param args Vector array of arguments to send to the command
- * @return Int error code returned by t he command. 
+ * @return Int error code returned by the command. 
  * 
  * @note Native commands are {exit, echo, type}
  * 
