@@ -11,4 +11,18 @@ I have completed the first section and am going to begin working on the project
 extensions soon! I am also making sure to have good documentation of things, but
 this is a self lead project so their is not any string rules I am currently following. 
 
+# skills learned
 
+## C++
+   The core purpose of this project was to learn C++ syntax and methadologies. 
+   Need to work on classes (C with classes lol). But functions and all makes sense. 
+   Also figured out custom header files. 
+
+## CMAKE
+   The project start off with a CMAKE repository, so I have had to do just a little
+   learning of cmake especially to work with vcpkg. 
+
+## VCPKG
+   Found out about this when trying to get external functions (like grep and cat)
+   to work without having to deal directly with system APIs (I wanted portability 
+   across OSs!!)
