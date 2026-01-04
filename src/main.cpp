@@ -21,7 +21,7 @@ namespace bp = boost::process;
 // COMMAND HANDLER FUNCTION DECLARATION ----------------------------------------
 
 /**
- * @brief the command workhorse running both shell builtins and externals
+ * @brief Command Switch / Handler Function
  * 
  * @param command String value of command to be ran.
  * @param args Vector array of arguments to send to the command
@@ -34,6 +34,15 @@ int handle_commands(std::string command, std::vector<std::string> args);
 
 // MAIN PROGRAM LOOP -----------------------------------------------------------
 
+/**
+ * @brief Main program loop entry point.
+ * 
+ * @return int 
+ * 
+ * Runs the main REPL loop for the shell.
+ * print prompt, get user input, parse command and arguments,
+ * handle commands via handle_commands function.
+ */
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -58,7 +67,7 @@ int main() {
     else {
       err_code = handle_commands(command, args);
     }
-    if (err_code == -5) {break;}
+    if (err_code == -5) {break;} // break on exit err_code
   }
 }
 
@@ -75,6 +84,8 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   if      (command == "exit") { return exit(); }
   else if (command == "echo") { return echo(args); }
   else if (command == "type") { return type(args, native_commands); }
+  // else if (command == "cd") { return cd(args); }
+  // else if (command == "pwd") { return pwd(args); }
   // default to finding command in path and run child process
   else if (fs::path execpath = get_executable_path(command); 
     !execpath.empty()) {

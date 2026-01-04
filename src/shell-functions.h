@@ -21,7 +21,7 @@ int exit();
  * @param echo_strings
  * @return Int error code returned by the command. 
  * 
- * (0) is success
+ * (0) is success.
  */
 int echo(std::vector<std::string> echo_strings);
 
