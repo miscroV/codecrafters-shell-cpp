@@ -26,3 +26,8 @@ this is a self lead project so their is not any string rules I am currently foll
    Found out about this when trying to get external functions (like grep and cat)
    to work without having to deal directly with system APIs (I wanted portability 
    across OSs!!)
+
+# Files
+main.cpp -> the main shell code. 
+shell-functions.cpp -> functions used by the shell 
+shell-functions.h   -> function header file 
