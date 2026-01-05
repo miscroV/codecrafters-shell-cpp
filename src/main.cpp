@@ -64,7 +64,7 @@ int main() {
     std::vector<std::string> args;     // vector to hold arguments
     args.reserve(16);                  // preallocate space for 16 arguments
 
-    while (line_stream >> std::quoted(input, '\'')) {     // pack arguments to vector :
+    while (line_stream >> input) {     // pack arguments to vector :
       args.push_back(input); 
       std::cout << "DEBUG: arg added: " << input << std::endl;
     }
