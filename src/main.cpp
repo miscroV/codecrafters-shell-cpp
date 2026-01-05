@@ -84,7 +84,22 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   if      (command == "exit") { return exit(); }
   else if (command == "echo") { return echo(args); }
   else if (command == "type") { return type(args, native_commands); }
-  // else if (command == "cd") { return cd(args); }
+  else if (command == "cd") { 
+    if (args.empty()) {
+      fs::path home_path = std::getenv("HOME");
+      fs::current_path(home_path);
+    }
+    else {
+      fs::path target_path = args[0];
+      std::error_code ec;
+      fs::current_path(target_path, ec);
+      if (ec) {
+        std::cout << "cd: " << target_path << ": "<< ec.message() << std::endl;
+        return 1;
+      }
+    }
+    return 0;
+  }
   else if (command == "pwd" ) { return pwd(); }
   // default to finding command in path and run child process
   else if (fs::path execpath = get_executable_path(command); 
