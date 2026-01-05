@@ -40,6 +40,16 @@ int echo(std::vector<std::string> echo_strings);
 int type(std::vector<std::string> type_commands, 
   std::vector<std::string> native_commands);
 
+
+/** 
+ * @brief return the current working directory 
+ * 
+ * @return Int error code returned by the command.
+ * 
+ * (0) is success.
+ */
+int pwd();
+
 // HELPER FUNCTIONS ------------------------------------------------------------
 
 /**

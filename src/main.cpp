@@ -76,7 +76,7 @@ int main() {
 int handle_commands(std::string command, std::vector<std::string> args) {
   // list of default commands that handle_commands handles natively. 
   std::vector<std::string> native_commands = {
-    "exit", "echo", "type"
+    "exit", "echo", "type", "pwd"
   };
   std::sort(native_commands.begin(), native_commands.end());
 
@@ -85,7 +85,7 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   else if (command == "echo") { return echo(args); }
   else if (command == "type") { return type(args, native_commands); }
   // else if (command == "cd") { return cd(args); }
-  // else if (command == "pwd") { return pwd(args); }
+  else if (command == "pwd" ) { return pwd(); }
   // default to finding command in path and run child process
   else if (fs::path execpath = get_executable_path(command); 
     !execpath.empty()) {

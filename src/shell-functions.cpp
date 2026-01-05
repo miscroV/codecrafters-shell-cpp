@@ -43,6 +43,11 @@ int type(std::vector<std::string> type_commands,
   return 0; //return success
 }
 
+int pwd() {
+  std::cout << std::filesystem::current_path().generic_string() << std::endl;
+  return 0; //return success
+}
+
 // HELPER FUNCTIONS ------------------------------------------------------------
 
 std::filesystem::path get_executable_path(const std::string& command) {
