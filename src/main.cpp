@@ -52,12 +52,13 @@ int main() {
   int err_code = 1;
   while (true) {
     std::string prompt = "$ ";
-    std::string command; // empty the command string every loop. 
     std::cout << prompt;
 
+
+    std::string command; // empty the command string every loop. 
     std::string input;
+
     std::getline(std::cin, input);
-    
     std::istringstream line_stream(input); // create stream from input line
     line_stream >> command;                // read command from stream
 
