@@ -50,6 +50,16 @@ int type(std::vector<std::string> type_commands,
  */
 int pwd();
 
+
+/**
+ * @brief change the current working directory
+ * 
+ * @param args Vector(string) containing arguments passed to command. 
+ * Normally a single directory path.
+ * @return Int error code returned by the command.  
+ */
+int cd(std::vector<std::string> args);
+
 // HELPER FUNCTIONS ------------------------------------------------------------
 
 /**

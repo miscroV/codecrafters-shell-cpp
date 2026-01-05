@@ -48,6 +48,23 @@ int pwd() {
   return 0; //return success
 }
 
+int cd(std::vector<std::string> args) {
+  if (args.empty() || args[0] == "~") {
+    std::filesystem::path home_path = std::getenv("HOME");
+    std::filesystem::current_path(home_path);
+  }
+  else {
+    std::filesystem::path target_path = args[0];
+    std::error_code ec;
+    std::filesystem::current_path(target_path, ec);
+    if (ec) {
+      std::cout << "cd: " << target_path.generic_string() 
+        << ": " << ec.message() << std::endl;
+      return 1;
+    }
+  }
+  return 0;
+  } 
 // HELPER FUNCTIONS ------------------------------------------------------------
 
 std::filesystem::path get_executable_path(const std::string& command) {

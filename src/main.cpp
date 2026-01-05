@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <boost/process.hpp>
+#include <iomanip>
 
 #include "shell-functions.h"
 
@@ -46,11 +47,14 @@ int handle_commands(std::string command, std::vector<std::string> args);
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
+  
 
   int err_code = 1;
   while (true) {
+    std::string prompt = "$ ";
     std::string command; // empty the command string every loop. 
-    std::cout << "$ ";
+    std::cout << prompt;
+
     std::string input;
     std::getline(std::cin, input);
     
@@ -59,24 +63,31 @@ int main() {
 
     std::vector<std::string> args;     // vector to hold arguments
     args.reserve(16);                  // preallocate space for 16 arguments
-    while (line_stream >> input) {     // pack arguments to vector :
+
+    while (line_stream >> std::quoted(input, '\'')) {     // pack arguments to vector :
       args.push_back(input); 
+      std::cout << "DEBUG: arg added: " << input << std::endl;
     }
-    // handle empty / native / other commands
-    if (command.empty()) {} 
-    else {
-      err_code = handle_commands(command, args);
-    }
+
+    // if empty skip else handle command
+    if (command.empty()) { /* Do nothing */ } 
+    else { err_code = handle_commands(command, args); }
+
     if (err_code == -5) {break;} // break on exit err_code
   }
 }
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
+int input_handler() {
+  return 0; // TODO: implement
+};
+
 int handle_commands(std::string command, std::vector<std::string> args) {
   // list of default commands that handle_commands handles natively. 
   std::vector<std::string> native_commands = {
-    "exit", "echo", "type", "pwd"
+    "exit", "echo", "type", // Basic Commands
+    "pwd", "cd"             // Navigation Commands
   };
   std::sort(native_commands.begin(), native_commands.end());
 
@@ -84,23 +95,7 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   if      (command == "exit") { return exit(); }
   else if (command == "echo") { return echo(args); }
   else if (command == "type") { return type(args, native_commands); }
-  else if (command == "cd") { 
-    if (args.empty() || args[0] == "~") {
-      fs::path home_path = std::getenv("HOME");
-      fs::current_path(home_path);
-    }
-    else {
-      fs::path target_path = args[0];
-      std::error_code ec;
-      fs::current_path(target_path, ec);
-      if (ec) {
-        std::cout << "cd: " << target_path.generic_string() 
-          << ": " << ec.message() << std::endl;
-        return 1;
-      }
-    }
-    return 0;
-  }
+  else if (command == "cd"  ) { return cd(args); }
   else if (command == "pwd" ) { return pwd(); }
   // default to finding command in path and run child process
   else if (fs::path execpath = get_executable_path(command); 
