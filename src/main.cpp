@@ -94,7 +94,8 @@ int handle_commands(std::string command, std::vector<std::string> args) {
       std::error_code ec;
       fs::current_path(target_path, ec);
       if (ec) {
-        std::cout << "cd: " << target_path << ": "<< ec.message() << std::endl;
+        std::cout << "cd: " << target_path.generic_string() 
+          << ": " << ec.message() << std::endl;
         return 1;
       }
     }
