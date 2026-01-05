@@ -85,7 +85,7 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   else if (command == "echo") { return echo(args); }
   else if (command == "type") { return type(args, native_commands); }
   else if (command == "cd") { 
-    if (args.empty()) {
+    if (args.empty() || args[0] == "~") {
       fs::path home_path = std::getenv("HOME");
       fs::current_path(home_path);
     }
