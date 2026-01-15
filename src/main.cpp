@@ -60,8 +60,7 @@ int main() {
     try {
       if (command.empty()) { /* Do nothing */ } 
       else { err_code = handle_commands(command, args); }
-
-      if (err_code == -5) {break;} // break on exit err_code
+      if (err_code == -5) {break;} // CONVERT TO CATCH EXECPTION (ExitShell exception and clean exist)
     } 
     catch (const std::exception& e) {
       if (DEBUG != true) {
@@ -69,8 +68,6 @@ int main() {
         std::cout << std::endl;
       } else {
         throw;
-      }
-
     }
   }
 }

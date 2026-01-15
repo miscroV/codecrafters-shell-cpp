@@ -10,6 +10,14 @@
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
+int handle_input() {
+    std:cout << "TODO" << std::endl;
+}
+
+int handle_builtin_errors(int error_code) {
+    std:cout << "TODO" << std::endl;
+}
+
 int handle_commands(std::string command, std::vector<std::string> args) {
   // list of default commands that handle_commands handles natively. 
   std::vector<std::string> native_commands = {
