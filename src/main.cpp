@@ -15,6 +15,7 @@
 #include <stdexcept>
 
 #include "shell-functions.h"
+#include "shell-handlers.h"
 
 namespace fs = std::filesystem;
 namespace bp = boost::process;
@@ -39,7 +40,6 @@ int main() {
   while (true) {
     std::string prompt = "$ ";
     std::cout << prompt;
-
 
     std::string command; // empty the command string every loop. 
     std::string input;
