@@ -63,12 +63,12 @@ int main() {
 
       if (err_code == -5) {break;} // break on exit err_code
     } 
-    catch (const std::exception &e) {
-      if (!(DEBUG)) {
-        std::cout << "Exception\n" e.what();
+    catch (const std::exception& e) {
+      if (DEBUG != true) {
+        std::cout << "Exception: \n" << e.what();
         std::cout << std::endl;
       } else {
-        throw &e
+        throw;
       }
 
     }
