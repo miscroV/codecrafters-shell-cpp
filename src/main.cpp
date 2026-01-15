@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <boost/process.hpp>
 #include <iomanip>
+#include <stdexcept>
 
 #include "shell-functions.h"
 
@@ -47,7 +48,7 @@ int handle_commands(std::string command, std::vector<std::string> args);
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-  
+  bool DEBUG = false;
 
   int err_code = 1;
   while (true) {
@@ -71,18 +72,25 @@ int main() {
     }
 
     // if empty skip else handle command
-    if (command.empty()) { /* Do nothing */ } 
-    else { err_code = handle_commands(command, args); }
+    try {
+      if (command.empty()) { /* Do nothing */ } 
+      else { err_code = handle_commands(command, args); }
 
-    if (err_code == -5) {break;} // break on exit err_code
+      if (err_code == -5) {break;} // break on exit err_code
+    } 
+    catch (const std::exception &e) {
+      if (!(DEBUG)) {
+        std::cout << "Exception\n" e.what();
+        std::cout << std::endl;
+      } else {
+        throw &e
+      }
+
+    }
   }
 }
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
-
-int input_handler() {
-  return 0; // TODO: implement
-};
 
 int handle_commands(std::string command, std::vector<std::string> args) {
   // list of default commands that handle_commands handles natively. 
