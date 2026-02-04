@@ -48,34 +48,55 @@ int handle_commands(std::string command, std::vector<std::string> args);
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-  
+  bool DEBUG = false;
 
   int err_code = 1;
+  std::string prompt = "$ ";
   while (true) {
-    std::string prompt = "$ ";
     std::cout << prompt;
 
-
+    std::string line;
     std::string command; // empty the command string every loop. 
-    std::string input;
+    std::string nextArg = "";
 
-    std::getline(std::cin, input);
-    std::istringstream line_stream(input); // create stream from input line
-    line_stream >> command;                // read command from stream
+    std::getline(std::cin, line);
 
     std::vector<std::string> args;     // vector to hold arguments
     args.reserve(16);                  // preallocate space for 16 arguments
 
-    while (line_stream >> input) {     // pack arguments to vector :
-      args.push_back(input); 
-      std::cout << "DEBUG: arg added: " << input << std::endl;
+    bool quoted = false;
+    for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
+      if (*ch == '\'' || *ch == '\"') {
+        if (DEBUG) {std::cout << "Quoted Toggled";}
+        quoted = !quoted;
+        continue;
+      }
+      if (quoted) {
+        nextArg += *ch;
+        if (DEBUG) {std::cout << *ch << " added to next arg" << std::endl;
+        continue;
+      }
+
+      if (isspace(*ch)) {
+        continue;
+      }
+      nextArg += *ch;
     }
 
     // if empty skip else handle command
-    if (command.empty()) { /* Do nothing */ } 
-    else { err_code = handle_commands(command, args); }
-
-    if (err_code == -5) {break;} // break on exit err_code
+    try {
+      if (command.empty()) { /* Do nothing */ } 
+      else { err_code = handle_commands(command, args); }
+      if (err_code == -5) {break;} // CONVERT TO CATCH EXECPTION (ExitShell exception and clean exist)
+    } 
+    catch (const std::exception& e) {
+      if (DEBUG != true) {
+        std::cout << "Exception: \n" << e.what();
+        std::cout << std::endl;
+      } else {
+        throw;
+      }
+    }
   }
 }
 
@@ -116,5 +137,5 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   else {
     std::cout << command << ": command not found" << std::endl;
   return 0;
-  }
-}   
+  }  
+}
