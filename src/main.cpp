@@ -48,7 +48,7 @@ int handle_commands(std::string command, std::vector<std::string> args);
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-  bool DEBUG = false;
+  bool DEBUG = true;
 
   int err_code = 1;
   std::string prompt = "$ ";
@@ -65,22 +65,39 @@ int main() {
     args.reserve(16);                  // preallocate space for 16 arguments
 
     bool quoted = false;
+    bool isArg = false;
     for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
-      if (*ch == '\'' || *ch == '\"') {
-        if (DEBUG) {std::cout << "Quoted Toggled";}
+      if (*ch == '\'') {
         quoted = !quoted;
         continue;
       }
+
       if (quoted) {
         nextArg += *ch;
-        if (DEBUG) {std::cout << *ch << " added to next arg" << std::endl;
-        continue;
       }
+      else if (!isspace(*ch)) {
+        nextArg += *ch;
+      }
+      
+      if (std::next(ch) == line.end() || isspace(*ch)) {
+        if (command.length() == 0) {
+          command = nextArg;
+          nextArg = "";
+        }
+        else {
+          args.push_back(nextArg);
+          nextArg = "";
+        }
+      } 
+    }
 
-      if (isspace(*ch)) {
-        continue;
+    if (DEBUG) {
+      std::cout << "[DEBUG] command = " << command << std::endl;
+      std::cout << "[DEBUG] args = [";
+      for (const auto& arg : args) {
+        std::cout << arg << ",";
       }
-      nextArg += *ch;
+      std::cout << "]" << std::endl;
     }
 
     // if empty skip else handle command
@@ -93,12 +110,14 @@ int main() {
       if (DEBUG != true) {
         std::cout << "Exception: \n" << e.what();
         std::cout << std::endl;
-      } else {
+      } 
+      else {
         throw;
       }
     }
   }
 }
+
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
@@ -137,5 +156,5 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   else {
     std::cout << command << ": command not found" << std::endl;
   return 0;
-  }  
-}
+  }
+}   
