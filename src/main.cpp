@@ -109,12 +109,27 @@ int handle_input(
   std::string* command_ptr, 
   std::vector<std::string>* args_ptr)
   {
+
   std::string nextArg = "";
   bool dquoted = false;
   bool squoted = false;
+  bool escaped = false;
   bool isArg = false;
+
   for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
-    if (*ch == '\"') {
+    
+    // Escaping chars
+    if (*ch == '\\' && !(dquoted || squoted)) {
+      escaped = !escaped;
+      if (std::next(ch) == line.end()) {isArg = true;}
+    }
+    else if (escaped) {
+      nextArg += *ch;
+      escaped = !escaped;
+      if (std::next(ch) == line.end()) {isArg = true;}
+    }
+    // quotes handled
+    else if (*ch == '\"') {
       dquoted = !dquoted;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
@@ -126,6 +141,8 @@ int handle_input(
       nextArg += *ch;
       isArg = false;
     }
+
+    // Normal chars
     else if (std::next(ch) == line.end()) {
       nextArg += *ch;
       isArg = true;
