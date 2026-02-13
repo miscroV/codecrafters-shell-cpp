@@ -110,10 +110,15 @@ int handle_input(
   std::vector<std::string>* args_ptr)
   {
   std::string nextArg = "";
+  bool dquoted = false;
   bool squoted = false;
   bool isArg = false;
   for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
-    if (*ch == '\'') {
+    if (*ch == '\"') {
+      dquoted = !dquoted;
+      if (std::next(ch) == line.end()) {isArg = true;}
+    }
+    else if (*ch == '\'' && !dquoted) {
       squoted = !squoted;
       if (std::next(ch) == line.end()) {isArg = true;}
     } 
