@@ -32,7 +32,14 @@ namespace bp = boost::process;
  * @note Native commands are {exit, echo, type}
  * 
  */
-int handle_commands(std::string command, std::vector<std::string> args);
+int handle_commands(
+  std::string command, 
+  std::vector<std::string> args);
+
+int input_handler(
+  std::string line, 
+  std::string* command_ptr, 
+  std::vector<std::string>* args_ptr);
 
 // MAIN PROGRAM LOOP -----------------------------------------------------------
 
@@ -63,51 +70,8 @@ int main() {
     std::vector<std::string> args;     
     args.reserve(16);                  
 
-    std::string nextArg = "";
-    bool squoted = false;
-    bool isArg = false;
-    for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
-      if (*ch == '\'') {
-        squoted = !squoted;
-        if (std::next(ch) == line.end()) {
-        isArg = true;
-        }
-      } 
-      else if (squoted || !isspace(*ch)) {
-        nextArg += *ch;
-        isArg = false;
-      }
-      else if (std::next(ch) == line.end()) {
-        nextArg += *ch;
-        isArg = true;
-      } 
-      else {
-        isArg = true;
-      }
-      if (DEBUG) {std::cout << nextArg << ": " << isArg<< std::endl;}
-
-      if (!isArg || nextArg.length() == 0) {continue;}
-
-      // ADD ARGUMENTS ---------------------#
-      if (command.length() == 0) {
-        command = nextArg;
-      }
-      else {
-        args.push_back(nextArg);
-      }
-      nextArg.clear();
-      isArg = false;
-    }
-
-    if (DEBUG) {
-      std::cout << "[DEBUG] command = " << command << std::endl;
-      std::cout << "[DEBUG] args = [";
-      for (const auto& arg : args) {
-        std::cout << arg << ",";
-      }
-      std::cout << "]" << std::endl;
-    }
-
+    input_handler(line, &command, &args);
+    
     // if empty skip else handle command
     try {
       if (command.empty()) { /* Do nothing */ } 
@@ -129,9 +93,64 @@ int main() {
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
-int input_handler() {
-  return 0; // TODO: implement
-};
+int input_handler(
+  std::string line, 
+  std::string* command_ptr, 
+  std::vector<std::string>* args_ptr)
+  {
+  std::string nextArg = "";
+  bool squoted = false;
+  bool isArg = false;
+  for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
+    if (*ch == '\'') {
+      squoted = !squoted;
+      if (std::next(ch) == line.end()) {
+      isArg = true;
+      }
+    } 
+
+    else if (squoted) {
+      nextArg += *ch;
+      isArg = false;
+    }
+
+    else if (std::next(ch) == line.end()) {
+      nextArg += *ch;
+      isArg = true;
+    } 
+    
+    else if (!isspace(*ch)) {
+      nextArg += *ch;
+      isArg = false;
+    }
+
+    else {
+      isArg = true;
+    }
+
+    if (!isArg || nextArg.length() == 0) {continue;}
+
+    // ADD ARGUMENTS ---------------------#
+    if (command_ptr->length() == 0) {
+      *command_ptr = nextArg;
+    }
+    else {
+      args_ptr->push_back(nextArg);
+    }
+    nextArg.clear();
+    isArg = false;
+  }
+
+  // if (DEBUG) {
+  //   std::cout << "[DEBUG] command = " << command << std::endl;
+  //   std::cout << "[DEBUG] args = [";
+  //   for (const auto& arg : args) {
+  //     std::cout << arg << ",";
+  //   }
+  //   std::cout << "]" << std::endl;
+  // }
+  return 0;
+}
 
 int handle_commands(std::string command, std::vector<std::string> args) {
   // list of default commands that handle_commands handles natively. 
