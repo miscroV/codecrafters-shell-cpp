@@ -48,7 +48,7 @@ int handle_commands(std::string command, std::vector<std::string> args);
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-  bool DEBUG = true;
+  bool DEBUG = false;
 
   int err_code = 1;
   std::string prompt = "$ ";
