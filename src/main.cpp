@@ -72,16 +72,20 @@ int main() {
       } 
       else if (squoted) {
         nextArg += *ch;
-      }
-      else if (!isspace(*ch)) {
-        nextArg += *ch;
+        isArg = false;
       }
       else if (std::next(ch) == line.end()) {
+        nextArg += *ch;
         isArg = true;
       } 
+      else if (!isspace(*ch)) {
+        nextArg += *ch;
+        isArg = false;
+      }
       else {
         isArg = true;
       }
+      if (DEBUG) {std::cout << nextArg << ": " << isArg<< std::endl;}
 
       if (!isArg || nextArg.length() == 0) {continue;}
 
