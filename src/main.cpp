@@ -36,7 +36,19 @@ int handle_commands(
   std::string command, 
   std::vector<std::string> args);
 
-int input_handler(
+// input HANDLER FUNCTION DECLARATION ----------------------------------------
+
+/**
+ * @brief Handle input to correct parseable format from a line.  
+ * 
+ * @param command_ptr Reference to string to place parsed command in.
+ * @param args_ptr Reference to vector of strings to place parsed arguments in. 
+ * @return 0
+ * 
+ * The function parses quotes and endline to use within the shell. 
+ * 
+ */
+int handle_input(
   std::string line, 
   std::string* command_ptr, 
   std::vector<std::string>* args_ptr);
@@ -70,7 +82,7 @@ int main() {
     std::vector<std::string> args;     
     args.reserve(16);                  
 
-    input_handler(line, &command, &args);
+    handle_input(line, &command, &args);
     
     // if empty skip else handle command
     try {
@@ -92,7 +104,7 @@ int main() {
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
-int input_handler(
+int handle_input(
   std::string line, 
   std::string* command_ptr, 
   std::vector<std::string>* args_ptr)
@@ -112,13 +124,11 @@ int input_handler(
     else if (std::next(ch) == line.end()) {
       nextArg += *ch;
       isArg = true;
-    } 
-    
+    }  
     else if (!isspace(*ch)) {
       nextArg += *ch;
       isArg = false;
     }
-
     else {
       isArg = true;
     }
