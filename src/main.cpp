@@ -122,7 +122,7 @@ int handle_input(
       squoted = !squoted;
       if (std::next(ch) == line.end()) {isArg = true;}
     } 
-    else if (squoted) {
+    else if (squoted || dquoted) {
       nextArg += *ch;
       isArg = false;
     }
