@@ -74,8 +74,7 @@ int main() {
     
     // if empty skip else handle command
     try {
-      if (command.empty()) { /* Do nothing */ } 
-      else { err_code = handle_commands(command, args); }
+      err_code = handle_commands(command, args);
       if (err_code == -5) {break;} // CONVERT TO CATCH EXECPTION (ExitShell exception and clean exist)
     } 
     catch (const std::exception& e) {
@@ -104,16 +103,12 @@ int input_handler(
   for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
     if (*ch == '\'') {
       squoted = !squoted;
-      if (std::next(ch) == line.end()) {
-      isArg = true;
-      }
+      if (std::next(ch) == line.end()) {isArg = true;}
     } 
-
     else if (squoted) {
       nextArg += *ch;
       isArg = false;
     }
-
     else if (std::next(ch) == line.end()) {
       nextArg += *ch;
       isArg = true;
@@ -140,20 +135,16 @@ int input_handler(
     nextArg.clear();
     isArg = false;
   }
-
-  // if (DEBUG) {
-  //   std::cout << "[DEBUG] command = " << command << std::endl;
-  //   std::cout << "[DEBUG] args = [";
-  //   for (const auto& arg : args) {
-  //     std::cout << arg << ",";
-  //   }
-  //   std::cout << "]" << std::endl;
-  // }
   return 0;
 }
 
 int handle_commands(std::string command, std::vector<std::string> args) {
   // list of default commands that handle_commands handles natively. 
+
+  if (command.empty()) {
+    return 0;
+  }
+
   std::vector<std::string> native_commands = {
     "exit", "echo", "type", // Basic Commands
     "pwd", "cd"             // Navigation Commands
