@@ -56,39 +56,44 @@ int main() {
     std::cout << prompt;
 
     std::string line;
-    std::string command; // empty the command string every loop. 
-    std::string nextArg = "";
-
     std::getline(std::cin, line);
+    boost::trim(line);
 
-    std::vector<std::string> args;     // vector to hold arguments
-    args.reserve(16);                  // preallocate space for 16 arguments
+    std::string command; 
+    std::vector<std::string> args;     
+    args.reserve(16);                  
 
-    bool quoted = false;
+    std::string nextArg = "";
+    bool squoted = false;
     bool isArg = false;
     for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
       if (*ch == '\'') {
-        quoted = !quoted;
-        continue;
-      }
-
-      if (quoted) {
+        squoted = !squoted;
+      } 
+      else if (squoted) {
         nextArg += *ch;
       }
       else if (!isspace(*ch)) {
         nextArg += *ch;
       }
-      
-      if (std::next(ch) == line.end() || isspace(*ch)) {
-        if (command.length() == 0) {
-          command = nextArg;
-          nextArg = "";
-        }
-        else {
-          args.push_back(nextArg);
-          nextArg = "";
-        }
+      else if (std::next(ch) == line.end()) {
+        isArg = true;
       } 
+      else {
+        isArg = true;
+      }
+
+      if (!isArg || nextArg.length() == 0) {continue;}
+
+      // ADD ARGUMENTS ---------------------#
+      if (command.length() == 0) {
+        command = nextArg;
+      }
+      else {
+        args.push_back(nextArg);
+      }
+      nextArg.clear();
+      isArg = false;
     }
 
     if (DEBUG) {
