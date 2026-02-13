@@ -73,15 +73,7 @@ int main() {
         isArg = true;
         }
       } 
-      else if (squoted) {
-        nextArg += *ch;
-        isArg = false;
-      }
-      else if (std::next(ch) == line.end()) {
-        nextArg += *ch;
-        isArg = true;
-      } 
-      else if (!isspace(*ch)) {
+      else if (squoted || std::next(ch) == line.end() || !isspace(*ch)) {
         nextArg += *ch;
         isArg = false;
       }
