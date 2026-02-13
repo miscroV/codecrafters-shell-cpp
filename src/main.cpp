@@ -119,12 +119,12 @@ int handle_input(
   for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
     
     // Escaping chars
-    if (*ch == '\\' && !(dquoted || squoted)) {
+    if (escaped) {
+      nextArg += *ch;
       escaped = !escaped;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
-    else if (escaped) {
-      nextArg += *ch;
+    else if (*ch == '\\' && !(dquoted || squoted)) {
       escaped = !escaped;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
