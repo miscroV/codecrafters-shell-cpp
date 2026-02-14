@@ -7,6 +7,8 @@
 #include <iostream>
 #include <filesystem>
 #include <algorithm>
+#include <deque>
+#include <boost/algorithm/string.hpp>
 
 // SHELL BUILTINS --------------------------------------------------------------
 
@@ -98,4 +100,133 @@ std::filesystem::path get_executable_path(const std::string& command) {
     }
   }
   return std::filesystem::path();
+}
+
+// SHELL Functions -------------------------------------------------------------
+
+int tokenize_input( 
+  std::deque<std::string>* tokens)
+  {
+
+  std::string n_token = "";
+  bool is_token = false;
+  bool dquoted  = false;
+  bool squoted  = false;
+  bool escaped  = false;
+  bool requestline = false;
+  bool addline;
+  
+  do {
+    // Gather a new line -----------------------------
+    if (requestline) {
+      requestline = !requestline;
+      std::cout << "> ";
+    }
+    std::string line;
+    std::getline(std::cin, line);
+    // Handle special line forms ----------------------
+    if (addline && line.empty()) {
+      addline = !addline;
+      break;
+    }
+    if ((squoted || dquoted) && line.empty()) {
+      n_token += '\n';
+      std::cout << "> ";
+      continue;
+    }
+    addline = (line.back() == '\\');
+    if (addline) { 
+      line.pop_back(); 
+    }
+    boost::trim(line);
+
+    // Parse line tokens --------------------------------
+    for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
+      // Escaping char handling
+      if (escaped) {
+        n_token += *ch;
+        escaped = !escaped;
+      }
+      //------------------------------
+
+      // Quoted Handling #######################################################
+      // Single Quotes handling ---------------
+      else if (*ch == '\'' && !dquoted && squoted && std::next(ch) == line.end()) {
+        squoted = !squoted;
+        is_token = true;
+      }
+      else if (*ch == '\'' && !dquoted && std::next(ch) == line.end()) {
+        n_token += '\n';
+        squoted = !squoted;
+        requestline = true;
+      } 
+      // find ' outside "" 
+      else if (*ch == '\'' && !dquoted) {
+        squoted = !squoted;
+      } 
+      // handle '' across lines. 
+      else if (squoted) {
+        n_token += *ch;
+        if (std::next(ch) == line.end()) {
+          n_token += '\n';
+          requestline = true;
+        }
+      }
+      // -------------------------------------
+
+      // Escape \ outside '' handling --------
+      else if (*ch == '\\') { escaped = !escaped; }
+
+      // Double Quotes Handling ---------------
+      else if (*ch == '\"' && dquoted && std::next(ch) == line.end()) {
+        dquoted = !dquoted;
+        is_token = true;
+      }
+      else if (*ch == '\"' && std::next(ch) == line.end()) {
+        n_token += '\n';
+        dquoted = !dquoted;
+        requestline = true;
+      } 
+      else if (*ch == '\"') {
+        dquoted = !dquoted;
+      }
+      else if (dquoted) {
+        n_token += *ch;
+        if (std::next(ch) == line.end()) {
+          n_token += '\n';
+          requestline = true;
+        }
+      }
+      // -------------------------------------
+
+      // Normal chars ------------------------
+      else if (std::next(ch) == line.end()) {
+        n_token += *ch;
+        is_token = true;
+      }  
+      else if (!isspace(*ch)) {
+        n_token += *ch;
+        is_token = false;
+      }
+      else {
+        is_token = true;
+      }
+      // -------------------------------------
+      //########################################################################
+
+      // token and new line handling ---------
+      if (requestline) {break;}
+      if (!is_token || n_token.length() == 0) {continue;}
+      tokens->push_back(n_token);
+      n_token.clear();
+      is_token = false;
+      // --------------------------------------
+    }
+    if (addline) {
+      std::cout << "> ";
+    }
+
+  } while (squoted || dquoted || addline);
+  
+  return 0;
 }
