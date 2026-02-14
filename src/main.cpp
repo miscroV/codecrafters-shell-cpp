@@ -13,6 +13,8 @@
 #include <filesystem>
 #include <boost/process.hpp>
 #include <iomanip>
+#include <deque>
+#include <stack>
 
 #include "shell-functions.h"
 //#include "shell-handlers.h"
@@ -53,6 +55,14 @@ int handle_input(
   std::string* command_ptr, 
   std::vector<std::string>* args_ptr);
 
+// EXPERIMENTAL
+
+int tokenize(std::deque<std::string>* tokens_que);
+int extract_next_command(
+  std::deque<std::string>* tokens,
+  std::string* command_ptr,
+  std::vector<std::string>* args_ptr);
+
 // MAIN PROGRAM LOOP -----------------------------------------------------------
 
 /**
@@ -74,17 +84,25 @@ int main() {
   while (true) {
     std::cout << prompt;
 
-    std::string line;
-    std::getline(std::cin, line);
-    boost::trim(line);
-
+    std::deque<std::string> tokens;
     std::string command; 
     std::vector<std::string> args;     
     args.reserve(16);                  
 
-    handle_input(line, &command, &args);
+    tokenize(&tokens);
+    // std::cout << "[DEBUG] tokens: [";
+    // for (std::string arg : tokens) {
+    //   std::cout << arg << ",";
+    // }
+    // std::cout << "]" << std::endl;
+
+    extract_next_command(&tokens, &command, &args);
+    //std::cout << command << std::endl;
     
-    // if empty skip else handle command
+
+    // handle_input(line, &command, &args);
+
+    //if empty skip else handle command
     try {
       err_code = handle_commands(command, args);
       if (err_code == -5) {break;} // CONVERT TO CATCH EXECPTION (ExitShell exception and clean exist)
@@ -104,73 +122,145 @@ int main() {
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
-int handle_input(
-  std::string line, 
-  std::string* command_ptr, 
-  std::vector<std::string>* args_ptr)
+int tokenize( 
+  std::deque<std::string>* tokens)
   {
 
-  std::string nextArg = "";
-  bool dquoted = false;
-  bool squoted = false;
-  bool escaped = false;
-  bool isArg = false;
+  std::string n_token = "";
+  bool is_token = false;
+  bool dquoted  = false;
+  bool squoted  = false;
+  bool escaped  = false;
+  bool requestline = false;
+  bool addline;
+  
+  do {
+    if (requestline) {
+      requestline = !requestline;
+      std::cout << "> ";
+    }
 
-  for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
+    std::string line;
+    std::getline(std::cin, line);
     
-    // Escaping chars
-    if (escaped) {
-      nextArg += *ch;
-      escaped = !escaped;
-      if (std::next(ch) == line.end()) {isArg = true;}
-    }
-    else if (*ch == '\'' && !dquoted) {
-      squoted = !squoted;
-      if (std::next(ch) == line.end()) {isArg = true;}
-    } 
-    else if (squoted) {
-      nextArg += *ch;
-    }
-    else if (*ch == '\\') {
-      escaped = !escaped;
-      if (std::next(ch) == line.end()) {isArg = true;}
-    }
-    // quotes handled
-    else if (*ch == '\"') {
-      dquoted = !dquoted;
-      if (std::next(ch) == line.end()) {isArg = true;}
+    // Edge cases [quoted and line is empty], [line ends with \]
+    if (addline && line.empty()) {
+      addline = !addline;
+      break;
     }
 
-    else if (squoted || dquoted) {
-      nextArg += *ch;
-      isArg = false;
+    if ((squoted || dquoted) && line.empty()) {
+      //std::cout << "[DEBUG] \\n added to token" << std::endl;
+      n_token += '\n';
+      std::cout << "> ";
+      continue;
     }
 
-    // Normal chars
-    else if (std::next(ch) == line.end()) {
-      nextArg += *ch;
-      isArg = true;
-    }  
-    else if (!isspace(*ch)) {
-      nextArg += *ch;
-      isArg = false;
-    }
-    else {
-      isArg = true;
+    addline = (line.back() == '\\');
+    if (addline) { 
+      line.pop_back(); 
     }
 
-    if (!isArg || nextArg.length() == 0) {continue;}
+    boost::trim(line);
 
-    // ADD ARGUMENTS ---------------------#
-    if (command_ptr->length() == 0) {
-      *command_ptr = nextArg;
+    //std::cout << "[DEBUG] got line: [" << line << "]" << std::endl;
+
+    // Parse the line
+    for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
+      // Escaping chars
+      //std::cout << "[DEBUG] n_token = [" << n_token << "]" << std::endl;
+
+      if (escaped) {
+        n_token += *ch;
+        escaped = !escaped;
+      }
+      //------------------------------
+
+      // Quoted Handling--------------------
+
+      else if (*ch == '\'' && !dquoted && squoted && std::next(ch) == line.end()) {
+        //std::cout << "[DEBUG] un_squoted at end of line, r_line" << requestline << std::endl; 
+        squoted = !squoted;
+        is_token = true;
+      }
+      else if (*ch == '\'' && !dquoted && std::next(ch) == line.end()) {
+        n_token += '\n';
+        squoted = !squoted;
+        requestline = true;
+      } 
+      // find ' outside "" 
+      else if (*ch == '\'' && !dquoted) {
+        squoted = !squoted;
+      } 
+      // handle '' across lines. 
+      else if (squoted) {
+        n_token += *ch;
+        if (std::next(ch) == line.end()) {
+          //std::cout << "[DEBUG] squoted at end of line" << std::endl;
+          n_token += '\n';
+          requestline = true;
+        }
+      }
+
+      // only process escapes outside of ''
+      else if (*ch == '\\') {
+        escaped = !escaped;
+      }
+
+      // find ""
+      else if (*ch == '\"' && dquoted && std::next(ch) == line.end()) {
+        //std::cout << "[DEBUG] un_dquoted at end of line, r_line" << requestline << std::endl; 
+        dquoted = !dquoted;
+        is_token = true;
+      }
+      else if (*ch == '\"' && std::next(ch) == line.end()) {
+        n_token += '\n';
+        dquoted = !dquoted;
+        requestline = true;
+      } 
+      else if (*ch == '\"') {
+        dquoted = !dquoted;
+      }
+
+      // handle "" across lines
+
+      else if (dquoted) {
+        n_token += *ch;
+        if (std::next(ch) == line.end()) {
+          //std::cout << "[DEBUG] dquoted at end of line" << std::endl;
+          n_token += '\n';
+          requestline = true;
+        }
+      }
+      //-----------------------------------
+
+      // Normal chars
+      else if (std::next(ch) == line.end()) {
+        n_token += *ch;
+        is_token = true;
+      }  
+      else if (!isspace(*ch)) {
+        n_token += *ch;
+        is_token = false;
+      }
+      else {
+        is_token = true;
+      }
+      
+      if (requestline) {break;}
+      if (!is_token || n_token.length() == 0) {continue;}
+      
+      // ADD ARGUMENTS ---------------------#
+      tokens->push_back(n_token);
+      n_token.clear();
+      is_token = false;
     }
-    else {
-      args_ptr->push_back(nextArg);
+    if (addline) {
+      std::cout << "> ";
     }
-    nextArg.clear();
-    isArg = false;
-  }
+
+  } while (squoted || dquoted || addline);
+  
   return 0;
 }
 
@@ -212,3 +302,21 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   return 0;
   }
 }   
+
+int extract_next_command(
+  std::deque<std::string>* tokens,
+  std::string* command_ptr,
+  std::vector<std::string>* args_ptr) {
+
+  if (tokens->empty()) {
+    return 0;
+  }
+  *command_ptr = tokens->front();
+  tokens->pop_front();
+  while (!tokens->empty()) {
+     args_ptr->push_back(tokens->front());
+     tokens->pop_front();
+  }
+  
+  return 0;
+}
