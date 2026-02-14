@@ -124,10 +124,10 @@ int handle_input(
       escaped = !escaped;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
-    else if (*ch == '\\' && !(squoted)) {
+    else if (*ch == '\\' && (squoted)) {
       nextArg += *ch;
     }
-    else if (*ch == '\\' && !(dquoted || squoted)) {
+    else if (*ch == '\\' && !(squoted)) {
       escaped = !escaped;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
