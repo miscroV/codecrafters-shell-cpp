@@ -130,7 +130,6 @@ int handle_input(
     } 
     else if (squoted) {
       nextArg += *ch;
-      std::cout << nextArg << " ";
     }
     else if (*ch == '\\') {
       escaped = !escaped;
