@@ -124,10 +124,15 @@ int handle_input(
       escaped = !escaped;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
-    else if (*ch == '\\' && (squoted)) {
+    else if (*ch == '\'' && !dquoted) {
+      squoted = !squoted;
+      if (std::next(ch) == line.end()) {isArg = true;}
+    } 
+    else if (squoted) {
       nextArg += *ch;
+      std::cout << nextArg << " ";
     }
-    else if (*ch == '\\' && !(squoted)) {
+    else if (*ch == '\\') {
       escaped = !escaped;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
@@ -136,10 +141,7 @@ int handle_input(
       dquoted = !dquoted;
       if (std::next(ch) == line.end()) {isArg = true;}
     }
-    else if (*ch == '\'' && !dquoted) {
-      squoted = !squoted;
-      if (std::next(ch) == line.end()) {isArg = true;}
-    } 
+
     else if (squoted || dquoted) {
       nextArg += *ch;
       isArg = false;
