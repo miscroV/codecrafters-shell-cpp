@@ -265,6 +265,7 @@ int extract_next_command(
 
   bool redirect = false;
   bool redirect_err = false;
+  bool redirect_append = false;
   while (!tokens->empty()) {
     if (tokens->front() == ">" || tokens->front() == "1>") {
       redirect = true;
@@ -281,6 +282,14 @@ int extract_next_command(
       if (r_stderr->is_open()) {r_stderr->close();}
       r_stderr->open(tokens->front());
       redirect_err = false;
+    }
+    else if (tokens->front() == ">>" || tokens->front() == "1>>") {
+      redirect_append = true;
+    }
+    else if (redirect_append) {
+      if (r_stdout->is_open()) {r_stdout->close();}
+      r_stdout->open(tokens->front(), std::ios::app);
+      redirect_append = false;
     }
     else {
       args_ptr->push_back(tokens->front());
