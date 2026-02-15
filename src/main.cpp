@@ -84,6 +84,7 @@ int main() {
     std::ofstream r_stdout;
     std::ofstream r_stderr;
     std::streambuf* stdout_buf;
+    std::streambuf* stderr_buf;
 
 
     tokenize_input(&tokens);
@@ -98,6 +99,10 @@ int main() {
     if (r_stdout.is_open()) {
       stdout_buf = std::cout.rdbuf();
       std::cout.rdbuf(r_stdout.rdbuf());
+    }
+    if (r_stderr.is_open()) {
+      stderr_buf = std::cerr.rdbuf();
+      std::cerr.rdbuf(r_stderr.rdbuf());
     }
 
     //if empty skip else handle command
@@ -118,6 +123,10 @@ int main() {
     if (r_stdout.is_open()) {
       std::cout.rdbuf(stdout_buf);
       r_stdout.close();
+    }
+    if (r_stderr.is_open()) {
+      std::cerr.rdbuf(stderr_buf);
+      r_stderr.close();
     }
   }
 }
@@ -255,6 +264,7 @@ int extract_next_command(
   tokens->pop_front();
 
   bool redirect = false;
+  bool redirect_err = false;
   while (!tokens->empty()) {
     if (tokens->front() == ">" || tokens->front() == "1>") {
       redirect = true;
@@ -263,6 +273,14 @@ int extract_next_command(
       if (r_stdout->is_open()) {r_stdout->close();}
       r_stdout->open(tokens->front());
       redirect = false;
+    }
+    else if (tokens->front() == "2>") {
+      redirect_err = true;
+    }
+    else if (redirect_err) {
+      if (r_stderr->is_open()) {r_stderr->close();}
+      r_stderr->open(tokens->front());
+      redirect_err = false;
     }
     else {
       args_ptr->push_back(tokens->front());
