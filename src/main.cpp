@@ -12,9 +12,10 @@
 #include <algorithm>
 #include <filesystem>
 #include <boost/process.hpp>
+#include <boost/asio.hpp>
 #include <iomanip>
 #include <deque>
-#include <stack>
+#include <fstream>
 
 #include "shell-functions.h"
 //#include "shell-handlers.h"
@@ -39,11 +40,16 @@ int handle_commands(
   std::vector<std::string> args);
 
 // EXPERIMENTAL
+int run_path_command(
+  std::string command, 
+  std::vector<std::string> args);
 
 int extract_next_command(
   std::deque<std::string>* tokens,
   std::string* command_ptr,
-  std::vector<std::string>* args_ptr);
+  std::vector<std::string>* args_ptr,
+  std::ofstream* r_stdout,
+  std::ofstream* r_stderr);
 
 // MAIN PROGRAM LOOP -----------------------------------------------------------
 
@@ -69,18 +75,27 @@ int main() {
     std::deque<std::string> tokens;
     std::string command; 
     std::vector<std::string> args;     
-    args.reserve(16);                  
+    args.reserve(16);                
+    
+    std::ofstream r_stdout;
+    std::ofstream r_stderr;
+    std::streambuf* stdout_buf;
+
 
     tokenize_input(&tokens);
-    std::cout << "[DEBUG] tokens: [";
-    for (std::string arg : tokens) {
-      std::cout << arg << ",";
-    }
-    std::cout << "]" << std::endl;
+    extract_next_command(&tokens, &command, &args, &r_stdout, &r_stderr);
 
-    extract_next_command(&tokens, &command, &args);
-    //std::cout << command << std::endl;
+    // std::cout << "[DEBUG] tokens: [";
+    // for (std::string arg : args) {
+    //   std::cout << arg << ",";
+    // }
+    // std::cout << "]" << std::endl;
     
+    if (r_stdout.is_open()) {
+      stdout_buf = std::cout.rdbuf();
+      std::cout.rdbuf(r_stdout.rdbuf());
+    }
+
     //if empty skip else handle command
     try {
       err_code = handle_commands(command, args);
@@ -94,6 +109,11 @@ int main() {
       else {
         throw;
       }
+    }
+
+    if (r_stdout.is_open()) {
+      std::cout.rdbuf(stdout_buf);
+      r_stdout.close();
     }
   }
 }
@@ -124,17 +144,7 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   else if (command == "pwd" ) { return pwd(); }
   // default to finding command in path and run child process
   else if (fs::path execpath = get_executable_path(command); 
-    !execpath.empty()) {
-    args.insert(args.begin(), command);  
-    bp::child c(
-      bp::args(args),
-      bp::std_out > stdout,
-      bp::std_err > stderr,
-      bp::std_in  < stdin
-      );
-    c.wait();
-    return c.exit_code();
-  }
+    !execpath.empty()) { return run_path_command(command, args); }
   // if command not found:
   else {
     std::cout << command << ": command not found" << std::endl;
@@ -142,20 +152,64 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   }
 }   
 
+int run_path_command(
+  std::string command, 
+  std::vector<std::string> args ) {
+
+  args.insert(args.begin(), command); 
+  bp::child c(
+    bp::args(args),
+    bp::std_out > stdout,
+    bp::std_err > stderr,
+    bp::std_in  < stdin
+  );
+  c.wait();
+  return c.exit_code();
+}
+  
+  // boost::asio::io_service io;
+  // std::vector<char> buf(4096);
+
+  // bp::child c(
+  //   bp::args(args),
+  //   bp::std_out > boost::asio::buffer(buf),
+  //   bp::std_err > stderr,
+  //   bp::std_in < stdin,
+  //   io
+  // );
+
+  // io.run();
+  // return c.exit_code()
+
+
 int extract_next_command(
   std::deque<std::string>* tokens,
   std::string* command_ptr,
-  std::vector<std::string>* args_ptr) {
+  std::vector<std::string>* args_ptr,
+  std::ofstream* r_stdout,
+  std::ofstream* r_stderr) {
 
   if (tokens->empty()) {
     return 0;
   }
+
   *command_ptr = tokens->front();
   tokens->pop_front();
+
+  bool redirect = false;
   while (!tokens->empty()) {
-     args_ptr->push_back(tokens->front());
-     tokens->pop_front();
+    if (tokens->front() == ">") {
+      redirect = true;
+    }
+    else if (redirect) {
+      if (r_stdout->is_open()) {r_stdout->close();}
+      r_stdout->open(tokens->front());
+      redirect = false;
+    }
+    else {
+      args_ptr->push_back(tokens->front());
+    }
+    tokens->pop_front();
   }
-  
   return 0;
 }

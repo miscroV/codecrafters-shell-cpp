@@ -140,7 +140,7 @@ int tokenize_input(
     }
     boost::trim(line);
 
-    // Parse line tokens --------------------------------
+    // Parse line tokens--------------------------------
     for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
       // Escaping char handling
       if (escaped) {
@@ -151,7 +151,7 @@ int tokenize_input(
 
       // Quoted Handling #######################################################
       // Single Quotes handling ---------------
-      else if (*ch == '\'' && !dquoted && squoted && std::next(ch) == line.end()) {
+      else if (*ch == '\'' && !dquoted && std::next(ch) == line.end() && squoted) {
         squoted = !squoted;
         is_token = true;
       }
@@ -178,7 +178,7 @@ int tokenize_input(
       else if (*ch == '\\') { escaped = !escaped; }
 
       // Double Quotes Handling ---------------
-      else if (*ch == '\"' && dquoted && std::next(ch) == line.end()) {
+      else if (*ch == '\"'  && std::next(ch) == line.end() && dquoted) {
         dquoted = !dquoted;
         is_token = true;
       }

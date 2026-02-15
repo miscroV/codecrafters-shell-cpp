@@ -1044,5 +1044,9 @@ dkms.conf
 # Raspberry Pi Pico disassembler file
 *.dis
 
+# vcpkg go by.
 vcpkg_installed
 vcpkg/
+
+# ignore my testing files
+testing/
