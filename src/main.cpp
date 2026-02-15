@@ -256,7 +256,7 @@ int extract_next_command(
 
   bool redirect = false;
   while (!tokens->empty()) {
-    if (tokens->front() == ">") {
+    if (tokens->front() == ">" || tokens->front() == "1>") {
       redirect = true;
     }
     else if (redirect) {
