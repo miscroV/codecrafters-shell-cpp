@@ -37,12 +37,16 @@ namespace bp = boost::process;
  */
 int handle_commands(
   std::string command, 
-  std::vector<std::string> args);
+  std::vector<std::string> args,
+  bool r_stdout,
+  bool r_stderr);
 
 // EXPERIMENTAL
 int run_path_command(
   std::string command, 
-  std::vector<std::string> args);
+  std::vector<std::string> args,
+  bool r_stdout,
+  bool r_stderr);
 
 int extract_next_command(
   std::deque<std::string>* tokens,
@@ -98,7 +102,7 @@ int main() {
 
     //if empty skip else handle command
     try {
-      err_code = handle_commands(command, args);
+      err_code = handle_commands(command, args, r_stdout.is_open(), r_stderr.is_open());
       if (err_code == -5) {break;} // CONVERT TO CATCH EXECPTION (ExitShell exception and clean exist)
     } 
     catch (const std::exception& e) {
@@ -121,9 +125,11 @@ int main() {
 
 // COMMAND HANDLER FUNCTION ----------------------------------------------------
 
-
-
-int handle_commands(std::string command, std::vector<std::string> args) {
+int handle_commands(
+  std::string command, 
+  std::vector<std::string> args,
+  bool r_stdout,
+  bool r_stdin) {
   // list of default commands that handle_commands handles natively. 
 
   if (command.empty()) {
@@ -144,7 +150,9 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   else if (command == "pwd" ) { return pwd(); }
   // default to finding command in path and run child process
   else if (fs::path execpath = get_executable_path(command); 
-    !execpath.empty()) { return run_path_command(command, args); }
+    !execpath.empty()) { 
+      return run_path_command(command, args, r_stdout, r_stdin); 
+    }
   // if command not found:
   else {
     std::cout << command << ": command not found" << std::endl;
@@ -152,35 +160,85 @@ int handle_commands(std::string command, std::vector<std::string> args) {
   }
 }   
 
+void read_async(bp::async_pipe& pipe, std::ostream& out_pipe) {
+  static boost::asio::streambuf buf;
+  static std::string line;
+  boost::asio::async_read_until(
+    pipe, buf, '\n',
+    [&](boost::system::error_code ec, size_t n) {
+      if (ec == boost::asio::error::eof) {
+        return;
+      } 
+      else if (ec) {
+        out_pipe << ec.message() << std::endl;
+        return;
+      }
+      if (getline(std::istream(&buf), line)) {
+        out_pipe << line << std::endl;
+      }
+      read_async(pipe, out_pipe);
+    }
+  );
+} 
+
 int run_path_command(
   std::string command, 
-  std::vector<std::string> args ) {
+  std::vector<std::string> args, 
+  bool r_stdout,
+  bool r_stderr) {
+
+  boost::asio::io_context io;
+  bp::async_pipe o_pipe(io);
+  bp::async_pipe e_pipe(io);
 
   args.insert(args.begin(), command); 
+
+  if (r_stderr && r_stdout) {
+    bp::child c(
+      bp::args(args),
+      bp::std_out > o_pipe,
+      bp::std_err > e_pipe,
+      bp::std_in  < stdin
+    );
+    read_async(o_pipe, std::cout);
+    read_async(e_pipe, std::cerr);
+    io.run();
+    return c.exit_code();
+  }
+
+  if (r_stdout) {
+    bp::child c(
+      bp::args(args),
+      bp::std_out > o_pipe,
+      bp::std_err > stderr,
+      bp::std_in  < stdin
+    );
+    read_async(o_pipe, std::cout);
+    io.run();
+    return c.exit_code();
+  }
+
+  if (r_stderr) {
+    bp::child c(
+      bp::args(args),
+      bp::std_out > stdout,
+      bp::std_err > e_pipe,
+      bp::std_in  < stdin
+    );
+    read_async(e_pipe, std::cerr);
+    io.run();
+    return c.exit_code();
+  }
+
   bp::child c(
     bp::args(args),
     bp::std_out > stdout,
-    bp::std_err > stderr,
+    bp::std_err > stdin,
     bp::std_in  < stdin
   );
   c.wait();
   return c.exit_code();
 }
-  
-  // boost::asio::io_service io;
-  // std::vector<char> buf(4096);
-
-  // bp::child c(
-  //   bp::args(args),
-  //   bp::std_out > boost::asio::buffer(buf),
-  //   bp::std_err > stderr,
-  //   bp::std_in < stdin,
-  //   io
-  // );
-
-  // io.run();
-  // return c.exit_code()
-
 
 int extract_next_command(
   std::deque<std::string>* tokens,
