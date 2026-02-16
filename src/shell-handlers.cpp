@@ -1,108 +1,56 @@
 /*******************************************************************************
- * SHELL BUILTIN FUNCTIONS IMPLEMENTATION
+ * SHELL HANDLERS
 *******************************************************************************/
 
-#include "shell-functions.h"
+#include "shell-handlers.h"
+#include "shell-helpers.h"
+#include "shell-builtins.h"
 
+#include <deque>
+#include <string>
+#include <vector>
+#include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <algorithm>
-#include <deque>
-#include <boost/algorithm/string.hpp>
-
-// SHELL BUILTINS --------------------------------------------------------------
-
-int exit(void) {
-  return -5; //exit code
-}
-
-int echo(std::vector<std::string> echo_strings) {
-    for (const auto& arg : echo_strings) {
-      std::cout << arg << " ";
-    }
-    std::cout << std::endl;
-    return 0; //return success
-}
-
-int type(std::vector<std::string> type_commands, 
-  std::vector<std::string> native_commands) {
-  if (type_commands.empty()) {
-      return 2; //ERROR Missing parameters
-  }
-  for (const auto& command : type_commands) {
-    if (std::binary_search(native_commands.begin(), 
-      native_commands.end(), command) ) {
-      std::cout << command << " is a shell builtin" << std::endl;
-    } 
-    else if (std::filesystem::path execpath = get_executable_path(command); 
-      !execpath.empty()) {
-      std::cout << command << " is " << execpath.generic_string() << std::endl;
-    }
-    else {
-      std::cout << command << ": not found" << std::endl;
-    } 
-  }
-  return 0; //return success
-}
-
-int pwd() {
-  std::cout << std::filesystem::current_path().generic_string() << std::endl;
-  return 0; //return success
-}
-
-int cd(std::vector<std::string> args) {
-  if (args.empty() || args[0] == "~") {
-    std::filesystem::path home_path = std::getenv("HOME");
-    std::filesystem::current_path(home_path);
-  }
-  else {
-    std::filesystem::path target_path = args[0];
-    std::error_code ec;
-    std::filesystem::current_path(target_path, ec);
-    if (ec) {
-      std::cout << "cd: " << target_path.generic_string() 
-        << ": " << ec.message() << std::endl;
-      return 1;
-    }
-  }
-  return 0;
-  } 
-// HELPER FUNCTIONS ------------------------------------------------------------
-
-std::filesystem::path get_executable_path(const std::string& command) {
-  std::string PATH = std::getenv("PATH");
-  std::istringstream path_stream(PATH);
-  std::string dir;
-
-  while (std::getline(path_stream, dir, ':')) {
-    std::filesystem::path full_path = std::filesystem::path(dir) / command;
-
-    // check if file exists, is a regular file, 
-    // and is executable by current user. 
-    bool is_executable = (
-    std::filesystem::exists(full_path) && 
-    std::filesystem::is_regular_file(full_path) && (
-    (std::filesystem::status(full_path).permissions() 
-      & std::filesystem::perms::owner_exec) 
-      != std::filesystem::perms::none ||
-    (std::filesystem::status(full_path).permissions() 
-      & std::filesystem::perms::group_exec) 
-      != std::filesystem::perms::none ||
-    (std::filesystem::status(full_path).permissions() 
-      & std::filesystem::perms::others_exec) 
-      != std::filesystem::perms::none
-      )
-    );
-    
-    if (is_executable) {
-      return full_path;
-      break;
-    }
-  }
-  return std::filesystem::path();
-}
+#include <boost/algorithm/string/trim.hpp>
 
 // SHELL Functions -------------------------------------------------------------
+
+
+int handle_commands(
+  std::string command, 
+  std::vector<std::string> args,
+  bool r_stdout,
+  bool r_stdin) {
+  // list of default commands that handle_commands handles natively. 
+
+  if (command.empty()) {
+    return 0;
+  }
+
+  std::vector<std::string> native_commands = {
+    "exit", "echo", "type", // Basic Commands
+    "pwd", "cd"             // Navigation Commands
+  };
+  std::sort(native_commands.begin(), native_commands.end());
+
+  // native commands switch
+  if      (command == "exit") { return exit(); }
+  else if (command == "echo") { return echo(args); }
+  else if (command == "type") { return type(args, native_commands); }
+  else if (command == "cd"  ) { return cd(args); }
+  else if (command == "pwd" ) { return pwd(); }
+  // default to finding command in path and run child process
+  else if (std::filesystem::path execpath = get_executable_path(command); 
+    !execpath.empty()) { 
+      return run_path_command(command, args, r_stdout, r_stdin); 
+    }
+  // if command not found:
+  else {
+    std::cout << command << ": command not found" << std::endl;
+  return 0;
+  }
+}   
 
 int tokenize_input( 
   std::deque<std::string>* tokens)
@@ -228,5 +176,68 @@ int tokenize_input(
 
   } while (squoted || dquoted || addline);
   
+  return 0;
+}
+
+int extract_next_command(
+  std::deque<std::string>* tokens,
+  std::string* command_ptr,
+  std::vector<std::string>* args_ptr,
+  std::ofstream* r_stdout,
+  std::ofstream* r_stderr) {
+
+  if (tokens->empty()) {
+    return 0;
+  }
+
+  *command_ptr = tokens->front();
+  tokens->pop_front();
+
+  bool redirect = false;
+  bool redirect_err = false;
+  bool redirect_append = false;
+  bool redirect_err_append = false;
+  while (!tokens->empty()) {
+    if (tokens->front() == ">" || tokens->front() == "1>") {
+      redirect = true;
+    }
+    else if (redirect) {
+      if (r_stdout->is_open()) {r_stdout->close();}
+      r_stdout->open(tokens->front());
+      redirect = false;
+    }
+
+    else if (tokens->front() == "2>") {
+      redirect_err = true;
+    }
+    else if (redirect_err) {
+      if (r_stderr->is_open()) {r_stderr->close();}
+      r_stderr->open(tokens->front());
+      redirect_err = false;
+    }
+
+    else if (tokens->front() == ">>" || tokens->front() == "1>>") {
+      redirect_append = true;
+    }
+    else if (redirect_append) {
+      if (r_stdout->is_open()) {r_stdout->close();}
+      r_stdout->open(tokens->front(), std::ios::app);
+      redirect_append = false;
+    }
+
+    else if (tokens->front() == "2>>") {
+      redirect_err_append = true;
+    }
+    else if (redirect_err_append) {
+      if (r_stderr->is_open()) {r_stderr->close();}
+      r_stderr->open(tokens->front(), std::ios::app);
+      redirect_err_append = false;
+    }
+    
+    else {
+      args_ptr->push_back(tokens->front());
+    }
+    tokens->pop_front();
+  }
   return 0;
 }

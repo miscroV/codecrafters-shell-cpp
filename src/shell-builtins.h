@@ -1,13 +1,11 @@
 /*******************************************************************************
- * SHELL BUILTIN FUNCTIONS HEADER
+ * SHELL BUILTINS
 *******************************************************************************/
-#ifndef SHELL_FUNCTIONS_H
-#define SHELL_FUNCTIONS_H
+#ifndef SHELL_BUILTINS_H
+#define SHELL_BUILTINS_H
 
 #include <vector>
-#include <filesystem>
 #include <string> 
-#include <deque>
 
 // SHELL BUILTINS --------------------------------------------------------------
 
@@ -61,26 +59,4 @@ int pwd();
  */
 int cd(std::vector<std::string> args);
 
-// HELPER FUNCTIONS ------------------------------------------------------------
-
-/**
- * @brief Help Function: Gets the full path of an executable if it exists. 
- * 
- * @param command String value of command that will be searched for in $PATH
- * @return std::filesystem::path value of executable or empty std::filesystem::path.
- */
-std::filesystem::path get_executable_path(const std::string& command);
-
-// SHELL FUNCTIONS -------------------------------------------------------------
-
-/**
- * @brief Gather input from the user, then tokenize it and add all tokens to tokens_que
- * 
- * @param tokens_que a reference to the deque to place tokens into.
- * @return 0
- * 
- */
-int tokenize_input(std::deque<std::string>* tokens_que);
-
-
-#endif // SHELL_FUNCTIONS_H
+#endif // SHELL_BUILTINS
