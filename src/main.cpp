@@ -50,6 +50,13 @@ int main() {
     std::streambuf* stdout_buf;
     std::streambuf* stderr_buf;
 
+    // TODO autocomplete
+    // 1 detect tab press using curses.h librar
+    // tokens and get last token
+    // using a trie datastructure, locate/predict the rest of the command
+    // write the rest of the command to the line before reading
+    // 
+    
     tokenize_input(&tokens);
     extract_next_command(&tokens, &command, &args, &r_stdout, &r_stderr);
 

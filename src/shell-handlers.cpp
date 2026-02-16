@@ -71,6 +71,8 @@ int tokenize_input(
       std::cout << "> ";
     }
     std::string line;
+    std::getline(std::cin, line, '\t');
+    std::cout << "found a tab!" << std::endl;
     std::getline(std::cin, line);
     // Handle special line forms ----------------------
     if (addline && line.empty()) {
