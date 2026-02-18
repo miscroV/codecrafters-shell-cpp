@@ -54,6 +54,7 @@ int main() {
 
   int err_code = 1;
   std::string prompt = "$ ";
+  enableRawMode(); // allows for immediating parsing. 
   while (true) {
     std::cout << prompt;
 
