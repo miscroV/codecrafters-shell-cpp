@@ -75,51 +75,59 @@ int main() {
     // write the rest of the command to the line before reading
     // 
 
-    char c;
-    while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
-      if (iscntrl(c)) {
-        printf("%d\n", c);
-      } else {
-        printf("%d ('%c')\n", c, c);
+    // char c;
+    // while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
+    //   if (iscntrl(c)) {
+    //     printf("%d\n", c);
+    //   } else {
+    //     printf("%d ('%c')\n", c, c);
+    //   }
+    // }
+    enum tokinizationFlags : std::uint8_t {
+      None = 0,
+      SQUOTED = 1 << 0,
+      DQUOTED = 1 << 1,
+      ESCAPED = 1 << 2,
+      REQLINE = 1 << 3,
+      ADDLINE = 1 << 4,
+    };
+    
+    tokenize_input_loop(&tokens);
+
+    extract_next_command(&tokens, &command, &args, &r_stdout, &r_stderr);
+
+    if (r_stdout.is_open()) {
+      stdout_buf = std::cout.rdbuf();
+      std::cout.rdbuf(r_stdout.rdbuf());
+    }
+    if (r_stderr.is_open()) {
+      stderr_buf = std::cerr.rdbuf();
+      std::cerr.rdbuf(r_stderr.rdbuf());
+    }
+
+    try {
+      err_code = handle_commands(
+        command, args, r_stdout.is_open(), r_stderr.is_open()
+      );
+      if (err_code == -5) {break;}
+    } 
+    catch (const std::exception& e) {
+      if (DEBUG != true) {
+        std::cout << "Exception: \n" << e.what();
+        std::cout << std::endl;
+      } 
+      else {
+        throw;
       }
     }
 
-    
-  //   tokenize_input(&tokens);
-  //   extract_next_command(&tokens, &command, &args, &r_stdout, &r_stderr);
-
-  //   if (r_stdout.is_open()) {
-  //     stdout_buf = std::cout.rdbuf();
-  //     std::cout.rdbuf(r_stdout.rdbuf());
-  //   }
-  //   if (r_stderr.is_open()) {
-  //     stderr_buf = std::cerr.rdbuf();
-  //     std::cerr.rdbuf(r_stderr.rdbuf());
-  //   }
-
-  //   try {
-  //     err_code = handle_commands(
-  //       command, args, r_stdout.is_open(), r_stderr.is_open()
-  //     );
-  //     if (err_code == -5) {break;}
-  //   } 
-  //   catch (const std::exception& e) {
-  //     if (DEBUG != true) {
-  //       std::cout << "Exception: \n" << e.what();
-  //       std::cout << std::endl;
-  //     } 
-  //     else {
-  //       throw;
-  //     }
-  //   }
-
-  //   if (r_stdout.is_open()) {
-  //     std::cout.rdbuf(stdout_buf);
-  //     r_stdout.close();
-  //   }
-  //   if (r_stderr.is_open()) {
-  //     std::cerr.rdbuf(stderr_buf);
-  //     r_stderr.close();
-  //   }
+    if (r_stdout.is_open()) {
+      std::cout.rdbuf(stdout_buf);
+      r_stdout.close();
+    }
+    if (r_stderr.is_open()) {
+      std::cerr.rdbuf(stderr_buf);
+      r_stderr.close();
+    }
   }
 }

@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <bitset>
 // SHELL Functions -------------------------------------------------------------
 
 
@@ -52,134 +53,229 @@ int handle_commands(
   }
 }   
 
-int tokenize_input( 
-  std::deque<std::string>* tokens)
-  {
+enum tokinizationFlags : std::uint8_t {
+  None = 0,
+  SQUOTED = 1 << 0,
+  DQUOTED = 1 << 1,
+  ESCAPED = 1 << 2,
+  REQLINE = 1 << 3,
+  ADDLINE = 1 << 4,
+};
 
-  std::string n_token = "";
-  bool is_token = false;
-  bool dquoted  = false;
-  bool squoted  = false;
-  bool escaped  = false;
-  bool requestline = false;
-  bool addline;
-  
+int gather_input(std::string* line) {
+  char c;
+  while (read(STDIN_FILENO, &c, 1) == 1) {
+    if (c == '\n') {
+      break;
+    }
+    if (c == 127 && !line->empty()) {
+      line->pop_back();
+      printf("\b \b");
+      fflush(stdout);
+    }
+    if (c == 9) {
+      std::deque<std::string> t_tokens;
+      tokenize_input(&t_tokens, *line);
+      std::cout << t_tokens.back();
+    }
+    else if (iscntrl(c)) {
+      
+    } 
+    else {
+      printf("%c", c);
+      line->append(1, c);
+      fflush(stdout);
+    }
+  }
+  printf("\n");
+  fflush(stdout);
+  return 0;
+}
+
+int tokenize_input_loop(std::deque<std::string>* tokens) {
+  int flags = tokinizationFlags::None;
+  bool dquoted  = (flags & DQUOTED);
+  bool squoted  = (flags & SQUOTED);
+  bool escaped  = (flags & ESCAPED);
+  bool requestline = (flags & REQLINE);
+  bool addline  = (flags & ADDLINE);
   do {
-    // Gather a new line -----------------------------
     if (requestline) {
       requestline = !requestline;
+      flags ^= REQLINE;
       std::cout << "> ";
     }
     std::string line;
-    std::getline(std::cin, line, '\t');
-    std::cout << "found a tab!" << std::endl;
-    std::getline(std::cin, line);
-    // Handle special line forms ----------------------
-    if (addline && line.empty()) {
-      addline = !addline;
-      break;
-    }
-    if ((squoted || dquoted) && line.empty()) {
-      n_token += '\n';
-      std::cout << "> ";
-      continue;
-    }
-    addline = (line.back() == '\\');
-    if (addline) { 
-      line.pop_back(); 
-    }
-    boost::trim(line);
+    gather_input(&line);
+    
 
-    // Parse line tokens--------------------------------
-    for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
-      // Escaping char handling
-      if (escaped) {
-        n_token += *ch;
-        escaped = !escaped;
-      }
-      //------------------------------
+    flags = tokenize_input(tokens, line, flags);
+    
+    dquoted  = (flags & DQUOTED);
+    squoted  = (flags & SQUOTED);
+    escaped  = (flags & ESCAPED);
+    requestline = (flags & REQLINE);
+    addline  = (flags & ADDLINE);
 
-      // Quoted Handling #######################################################
-      // Single Quotes handling ---------------
-      else if (*ch == '\'' && !dquoted && std::next(ch) == line.end() && squoted) {
-        squoted = !squoted;
-        is_token = true;
-      }
-      else if (*ch == '\'' && !dquoted && std::next(ch) == line.end()) {
-        n_token += '\n';
-        squoted = !squoted;
-        requestline = true;
-      } 
-      // find ' outside "" 
-      else if (*ch == '\'' && !dquoted) {
-        squoted = !squoted;
-      } 
-      // handle '' across lines. 
-      else if (squoted) {
-        n_token += *ch;
-        if (std::next(ch) == line.end()) {
-          n_token += '\n';
-          requestline = true;
-        }
-      }
-      // -------------------------------------
-
-      // Escape \ outside '' handling --------
-      else if (*ch == '\\') { escaped = !escaped; }
-
-      // Double Quotes Handling ---------------
-      else if (*ch == '\"'  && std::next(ch) == line.end() && dquoted) {
-        dquoted = !dquoted;
-        is_token = true;
-      }
-      else if (*ch == '\"' && std::next(ch) == line.end()) {
-        n_token += '\n';
-        dquoted = !dquoted;
-        requestline = true;
-      } 
-      else if (*ch == '\"') {
-        dquoted = !dquoted;
-      }
-      else if (dquoted) {
-        n_token += *ch;
-        if (std::next(ch) == line.end()) {
-          n_token += '\n';
-          requestline = true;
-        }
-      }
-      // -------------------------------------
-
-      // Normal chars ------------------------
-      else if (std::next(ch) == line.end()) {
-        n_token += *ch;
-        is_token = true;
-      }  
-      else if (!isspace(*ch)) {
-        n_token += *ch;
-        is_token = false;
-      }
-      else {
-        is_token = true;
-      }
-      // -------------------------------------
-      //########################################################################
-
-      // token and new line handling ---------
-      if (requestline) {break;}
-      if (!is_token || n_token.length() == 0) {continue;}
-      tokens->push_back(n_token);
-      n_token.clear();
-      is_token = false;
-      // --------------------------------------
-    }
     if (addline) {
       std::cout << "> ";
     }
 
   } while (squoted || dquoted || addline);
-  
   return 0;
 }
+
+int tokenize_input( 
+  std::deque<std::string>* tokens,
+  std::string line,
+  int flags )
+  {
+  std::string n_token = "";
+  bool is_token = false;
+  bool dquoted  = (flags & DQUOTED);
+  bool squoted  = (flags & SQUOTED);
+  bool escaped  = (flags & ESCAPED);
+  bool requestline = (flags & REQLINE);
+  bool addline  = (flags & ADDLINE);
+  
+
+  // Gather a new line -----------------------------
+  if (requestline) {
+    requestline = !requestline;
+    flags ^= REQLINE;
+    std::cout << "> ";
+  }
+
+  // Handle special line forms ----------------------
+  if (addline && line.empty()) {
+    addline = !addline;
+    flags ^= ADDLINE;
+    return flags;
+  }
+  if ((squoted || dquoted) && line.empty()) {
+    n_token += '\n';
+    std::cout << "> ";
+    return flags;
+  }
+  if (line.empty()) {
+    return flags;
+  }
+
+  addline = (line.back() == '\\');
+  if (addline) { 
+    line.pop_back(); 
+  }
+  boost::trim(line);
+
+  // Parse line tokens--------------------------------
+  for (std::string::iterator ch = line.begin(); ch !=line.end(); ++ch) {
+    // Escaping char handling
+    if (escaped) {
+      n_token += *ch;
+      escaped = !escaped;
+      flags ^= ESCAPED;
+    }
+    //------------------------------
+
+    // Quoted Handling #######################################################
+    // Single Quotes handling ---------------
+    else if (*ch == '\'' && !dquoted && std::next(ch) == line.end() && squoted) {
+      squoted = !squoted;
+      flags ^= SQUOTED;
+      is_token = true;
+    }
+    else if (*ch == '\'' && !dquoted && std::next(ch) == line.end()) {
+      n_token += '\n';
+      squoted = !squoted;
+      flags ^= SQUOTED;
+      requestline = true;
+      flags |= REQLINE;
+    } 
+    // find ' outside "" 
+    else if (*ch == '\'' && !dquoted) {
+      squoted = !squoted;
+      flags ^= SQUOTED;
+    } 
+    // handle '' across lines. 
+    else if (squoted) {
+      n_token += *ch;
+      if (std::next(ch) == line.end()) {
+        n_token += '\n';
+        requestline = true;
+        flags ^= REQLINE;
+      }
+    }
+    // -------------------------------------
+
+    // Escape \ outside '' handling --------
+    else if (*ch == '\\') { escaped = !escaped; flags ^= ESCAPED;}
+
+    // Double Quotes Handling ---------------
+    else if (*ch == '\"'  && std::next(ch) == line.end() && dquoted) {
+      dquoted = !dquoted;
+      flags ^= DQUOTED;
+      is_token = true;
+    }
+    else if (*ch == '\"' && std::next(ch) == line.end()) {
+      n_token += '\n';
+      dquoted = !dquoted;
+      flags ^= DQUOTED;
+      requestline = true;
+      flags ^= REQLINE;
+    } 
+    else if (*ch == '\"') {
+      dquoted = !dquoted;
+      flags ^= DQUOTED;
+    }
+    else if (dquoted) {
+      n_token += *ch;
+      if (std::next(ch) == line.end()) {
+        n_token += '\n';
+        requestline = true;
+        flags |= REQLINE;
+      }
+    }
+    // -------------------------------------
+
+    // Normal chars ------------------------
+    else if (std::next(ch) == line.end()) {
+      n_token += *ch;
+      is_token = true;
+    }  
+    else if (!isspace(*ch)) {
+      n_token += *ch;
+      is_token = false;
+    }
+    else {
+      is_token = true;
+    }
+    // -------------------------------------
+    //########################################################################
+
+    // token and new line handling ---------
+    if (requestline) {
+      tokens->push_back(n_token);
+      break;
+    }
+    if (!is_token || n_token.length() == 0) {continue;}
+    tokens->push_back(n_token);
+    n_token.clear();
+    is_token = false;
+    // --------------------------------------
+  }
+  // if (addline) {
+  //   std::cout << "> ";
+  // }
+  // std::cout << "[DEBUG] flags : " << std::bitset<8>(flags) << std::endl;
+  
+  return flags;
+}
+
+int tokenize_input( 
+  std::deque<std::string>* tokens,
+  std::string line) {
+    return tokenize_input(tokens, line, tokinizationFlags::None);
+  }
 
 int extract_next_command(
   std::deque<std::string>* tokens,

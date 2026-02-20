@@ -35,7 +35,10 @@ int handle_commands(
  * @return 0
  * 
  */
-int tokenize_input(std::deque<std::string>* tokens_que);
+int tokenize_input(std::deque<std::string>* tokens_que, std::string line, int flags);
+int tokenize_input(std::deque<std::string>* tokens_que, std::string line);
+
+int tokenize_input_loop(std::deque<std::string>* tokens);
 
 /**
  * @brief Extract the next command to run from deque, parsing stream redirects (and pipes?)
